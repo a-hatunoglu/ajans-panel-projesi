@@ -1,0 +1,262 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Faz 2: Auth + Users ────────────────────────────────────
+
+model User {
+  id              String    @id @default(uuid()) @db.Uuid
+  email           String    @unique @db.VarChar(255)
+  passwordHash    String?   @map("password_hash") @db.VarChar(255)
+  firstName       String    @map("first_name") @db.VarChar(100)
+  lastName        String    @map("last_name") @db.VarChar(100)
+  avatarUrl       String?   @map("avatar_url") @db.VarChar(500)
+  role            String    @db.VarChar(20) // owner, admin, editor, designer, client
+  isActive        Boolean   @default(true) @map("is_active")
+  lastLoginAt     DateTime? @map("last_login_at")
+  inviteToken     String?   @map("invite_token") @db.VarChar(255)
+  inviteExpiresAt DateTime? @map("invite_expires_at")
+  resetToken      String?   @map("reset_token") @db.VarChar(255)
+  resetExpiresAt  DateTime? @map("reset_expires_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  refreshTokens            RefreshToken[]
+  companyUsers              CompanyUser[]
+  createdContents           Content[]        @relation("ContentCreatedBy")
+  assignedDesignerContents  Content[]        @relation("ContentAssignedDesigner")
+  assignedEditorContents    Content[]        @relation("ContentAssignedEditor")
+  approvedContents          Content[]        @relation("ContentApprovedBy")
+  contentVersions           ContentVersion[]
+  contentComments           ContentComment[]
+  notifications             Notification[]
+  activityLogs              ActivityLog[]
+  createdPayments           Payment[]        @relation("PaymentCreatedBy")
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  tokenHash String   @map("token_hash") @db.VarChar(255)
+  userAgent String?  @map("user_agent") @db.VarChar(500)
+  ipAddress String?  @map("ip_address") @db.VarChar(45)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("refresh_tokens")
+}
+
+// ─── Faz 3: Companies + Company-Users ────────────────────────
+
+model Company {
+  id        String    @id @default(uuid()) @db.Uuid
+  name      String    @db.VarChar(200)
+  slug      String    @unique @db.VarChar(200)
+  logoUrl   String?   @map("logo_url") @db.VarChar(500)
+  website   String?   @db.VarChar(500)
+  phone     String?   @db.VarChar(30)
+  email     String?   @db.VarChar(255)
+  address   String?   @db.Text
+  notes     String?   @db.Text
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  companyUsers    CompanyUser[]
+  socialAccounts  SocialAccount[]
+  contents        Content[]
+  notifications   Notification[]
+  activityLogs    ActivityLog[]
+  payments        Payment[]
+
+  @@map("companies")
+}
+
+model CompanyUser {
+  id        String   @id @default(uuid()) @db.Uuid
+  companyId String   @map("company_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, userId])
+  @@index([userId])
+  @@map("company_users")
+}
+
+// ─── Faz 4: Social Accounts ──────────────────────────────────
+
+model SocialAccount {
+  id          String    @id @default(uuid()) @db.Uuid
+  companyId   String    @map("company_id") @db.Uuid
+  platform    String    @db.VarChar(20) // instagram, facebook, x, linkedin, tiktok, youtube
+  accountName String    @map("account_name") @db.VarChar(200)
+  profileUrl  String?   @map("profile_url") @db.VarChar(500)
+  notes       String?   @db.Text
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  contents Content[]
+
+  @@index([companyId])
+  @@map("social_accounts")
+}
+
+// ─── Faz 5: Contents + Approval Workflow ─────────────────
+
+model Content {
+  id                 String    @id @default(uuid()) @db.Uuid
+  companyId          String    @map("company_id") @db.Uuid
+  socialAccountId    String    @map("social_account_id") @db.Uuid
+  assignedDesignerId String    @map("assigned_designer_id") @db.Uuid
+  assignedEditorId   String    @map("assigned_editor_id") @db.Uuid
+  createdById        String    @map("created_by_id") @db.Uuid
+  approvedById       String?   @map("approved_by_id") @db.Uuid
+  title              String    @db.VarChar(500)
+  body               String?   @db.Text
+  status             String    @default("draft") @db.VarChar(20)
+  approvedAt         DateTime? @map("approved_at")
+  scheduledAt        DateTime? @map("scheduled_at")
+  publishedAt        DateTime? @map("published_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+  deletedAt          DateTime? @map("deleted_at")
+
+  company          Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  socialAccount    SocialAccount  @relation(fields: [socialAccountId], references: [id])
+  assignedDesigner User           @relation("ContentAssignedDesigner", fields: [assignedDesignerId], references: [id])
+  assignedEditor   User           @relation("ContentAssignedEditor", fields: [assignedEditorId], references: [id])
+  createdBy        User           @relation("ContentCreatedBy", fields: [createdById], references: [id])
+  approvedBy       User?          @relation("ContentApprovedBy", fields: [approvedById], references: [id])
+  versions         ContentVersion[]
+  comments         ContentComment[]
+
+  @@index([companyId])
+  @@index([socialAccountId])
+  @@index([assignedDesignerId])
+  @@index([assignedEditorId])
+  @@index([status])
+  @@map("contents")
+}
+
+model ContentVersion {
+  id          String   @id @default(uuid()) @db.Uuid
+  contentId   String   @map("content_id") @db.Uuid
+  createdById String   @map("created_by_id") @db.Uuid
+  title       String   @db.VarChar(500)
+  body        String?  @db.Text
+  status      String   @db.VarChar(20)
+  version     Int      @default(1)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  content   Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  createdBy User    @relation(fields: [createdById], references: [id])
+
+  @@index([contentId])
+  @@map("content_versions")
+}
+
+model ContentComment {
+  id        String   @id @default(uuid()) @db.Uuid
+  contentId String   @map("content_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  body      String   @db.Text
+  type      String   @default("comment") @db.VarChar(20) // comment, approval, rejection
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@index([contentId])
+  @@map("content_comments")
+}
+
+// ─── Faz 6: Notifications ────────────────────────────────────
+
+model Notification {
+  id           String    @id @default(uuid()) @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  companyId    String?   @map("company_id") @db.Uuid
+  type         String    @db.VarChar(50)
+  title        String    @db.VarChar(200)
+  message      String?   @db.Text
+  resourceType String?   @map("resource_type") @db.VarChar(50)
+  resourceId   String?   @map("resource_id") @db.Uuid
+  isRead       Boolean   @default(false) @map("is_read")
+  readAt       DateTime? @map("read_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([companyId])
+  @@index([isRead])
+  @@map("notifications")
+}
+
+// ─── Faz 7: Payments & Activity Logs ─────────────────────────
+
+model Payment {
+  id           String    @id @default(uuid()) @db.Uuid
+  companyId    String    @map("company_id") @db.Uuid
+  amount       Decimal   @db.Decimal(10, 2)
+  currency     String    @default("TRY") @db.VarChar(10)
+  periodStart  DateTime? @map("period_start") @db.Date // Sadece tarih tutması iyi olabilir ama datetime opsiyonel yapilacak
+  periodEnd    DateTime? @map("period_end") @db.Date
+  dueDate      DateTime  @map("due_date") @db.Date
+  status       String    @default("pending") @db.VarChar(20) // pending, paid, overdue
+  paidAt       DateTime? @map("paid_at")
+  notes        String?   @db.Text
+  createdById  String    @map("created_by") @db.Uuid
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdBy User    @relation("PaymentCreatedBy", fields: [createdById], references: [id])
+
+  @@index([companyId])
+  @@index([status])
+  @@map("payments")
+}
+
+model ActivityLog {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String?  @map("user_id") @db.Uuid
+  companyId    String?  @map("company_id") @db.Uuid
+  action       String   @db.VarChar(100)
+  resourceType String?  @map("resource_type") @db.VarChar(50)
+  resourceId   String?  @map("resource_id") @db.Uuid
+  details      Json?
+  ipAddress    String?  @map("ip_address") @db.VarChar(45)
+  userAgent    String?  @map("user_agent") @db.Text
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([companyId])
+  @@index([resourceType, resourceId])
+  @@map("activity_logs")
+}

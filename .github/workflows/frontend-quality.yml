@@ -1,0 +1,92 @@
+name: Quality Gate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  quality-gate:
+    name: Quality Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: ajans_panel
+          POSTGRES_USER: ajans_user
+          POSTGRES_PASSWORD: ajans_pass_2024
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ajans_user -d ajans_panel"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://ajans_user:ajans_pass_2024@127.0.0.1:5432/ajans_panel
+      JWT_ACCESS_SECRET: ci_dummy_access_secret_0123456789abcdef
+      JWT_REFRESH_SECRET: ci_dummy_refresh_secret_0123456789abcdef
+      NODE_ENV: development
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+        working-directory: frontend
+
+      - name: Generate Prisma client
+        run: npm run prisma:generate
+
+      - name: Apply Prisma migrations
+        run: npx prisma migrate deploy
+
+      - name: Typecheck backend and shared TypeScript
+        run: npx tsc --noEmit
+
+      - name: Lint backend
+        run: npm run lint
+
+      - name: Build backend
+        run: npm run build
+
+      - name: Lint frontend
+        run: npm run lint
+        working-directory: frontend
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: frontend
+
+      - name: Run frontend smoke suite
+        run: npm run test:smoke
+        working-directory: frontend
+
+      - name: Upload Playwright failure artifacts
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-gate-playwright-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            frontend/playwright-report
+            frontend/test-results
+          if-no-files-found: ignore
+          retention-days: 7

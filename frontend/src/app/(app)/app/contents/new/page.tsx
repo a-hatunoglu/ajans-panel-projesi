@@ -1,0 +1,93 @@
+"use client";
+
+import { PageContainer } from "@/components/shared/page-container";
+import { PageStatePanel } from "@/components/shared/page-state-panel";
+import { RestrictedAccessPanel } from "@/components/shared/restricted-access-panel";
+import { useCreateCompanyOptions } from "@/features/content-create/api/queries";
+import { ContentCreateForm } from "@/features/content-create/components/content-create-form";
+import { useI18n } from "@/i18n/provider";
+import { useAuth } from "@/providers/auth-provider";
+
+export default function ContentCreatePage() {
+  const { t } = useI18n();
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const role = user?.role || "guest";
+  const canCreate = ["owner", "admin", "editor", "designer"].includes(role);
+  const companiesQuery = useCreateCompanyOptions(canCreate && !isAuthLoading);
+  const companies = companiesQuery.data ?? [];
+
+  if (isAuthLoading) {
+    return (
+      <PageStatePanel
+        title={t("contentCreate.loadingTitle")}
+        description={t("contentCreate.loadingDescription")}
+        className="max-w-5xl"
+      />
+    );
+  }
+
+  if (!user || !canCreate) {
+    return (
+      <PageContainer className="animate-in fade-in duration-500 pb-12 max-w-5xl">
+        <div className="mb-6">
+          <h1 className="mb-1 text-2xl font-medium tracking-tight text-white">
+            {t("contentCreate.pageTitle")}
+          </h1>
+          <p className="text-sm text-zinc-400">{t("contentCreate.pageSubtitle")}</p>
+        </div>
+        <RestrictedAccessPanel description={t("contentCreate.restrictedDescription")} />
+      </PageContainer>
+    );
+  }
+
+  if (companiesQuery.isLoading) {
+    return (
+      <PageStatePanel
+        title={t("contentCreate.loadingTitle")}
+        description={t("contentCreate.loadingDescription")}
+        className="max-w-5xl"
+      />
+    );
+  }
+
+  if (companiesQuery.isError) {
+    const message =
+      companiesQuery.error instanceof Error
+        ? companiesQuery.error.message
+        : t("contentCreate.errorDescription");
+
+    return (
+      <PageStatePanel
+        title={t("contentCreate.errorTitle")}
+        description={message}
+        className="max-w-5xl"
+      />
+    );
+  }
+
+  if (companies.length === 0) {
+    return (
+      <PageStatePanel
+        title={t("contentCreate.emptyTitle")}
+        description={t("contentCreate.emptyDescription")}
+        className="max-w-5xl"
+      />
+    );
+  }
+
+  return (
+    <PageContainer className="animate-in fade-in duration-500 pb-12 max-w-5xl">
+      <div className="mb-6">
+        <h1 className="mb-1 text-2xl font-medium tracking-tight text-white">
+          {t("contentCreate.pageTitle")}
+        </h1>
+        <p className="text-sm text-zinc-400">{t("contentCreate.pageSubtitle")}</p>
+      </div>
+
+      <ContentCreateForm
+        companies={companies}
+        currentUser={{ id: user.id, role: role as "owner" | "admin" | "editor" | "designer" | "client" }}
+      />
+    </PageContainer>
+  );
+}
