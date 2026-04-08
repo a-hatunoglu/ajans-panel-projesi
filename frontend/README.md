@@ -25,20 +25,23 @@ Open `http://localhost:5173`.
 
 ## Frontend env contract
 
-The frontend currently uses one runtime env var:
+The frontend uses these env vars:
 
 - `NEXT_PUBLIC_API_URL`
+- `API_REWRITE_TARGET`
 
 Rules:
 
 - Leave it unset for same-origin deployments where the frontend can call `/api/v1` on its own origin.
 - Set it for split-origin deployments where the frontend must call a different backend origin.
 - Treat it as a build-time input. Rebuild the frontend when it changes.
+- For `API_REWRITE_TARGET`, provide backend origin without `/api/v1` when Next.js should rewrite `/api/v1/*` requests.
 
 Local example:
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:3000/api/v1
+API_REWRITE_TARGET=
 ```
 
 ## Supported deployment modes
@@ -49,6 +52,7 @@ Use this when the frontend and backend are served behind one public origin.
 
 - Leave `NEXT_PUBLIC_API_URL` unset.
 - Route `/api/v1` to the backend.
+- If using Next.js rewrites for this, set `API_REWRITE_TARGET=https://your-backend-domain.com`.
 
 ### 2. Split-origin same-site deployment
 
