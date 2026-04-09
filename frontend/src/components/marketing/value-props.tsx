@@ -44,9 +44,9 @@ export function ValueProps() {
           {features.map((feature, idx) => (
             <div 
               key={idx} 
-              className="group p-8 rounded-2xl border border-white/5 bg-zinc-900/20 hover:bg-zinc-900/50 transition-colors flex flex-col gap-4"
+              className="group p-8 rounded-2xl border border-white/5 bg-zinc-950 hover:bg-white/5 transition-colors flex flex-col gap-4"
             >
-              <div className="w-12 h-12 rounded-xl border border-white/10 bg-zinc-900/80 flex items-center justify-center shrink-0">
+              <div className="w-12 h-12 rounded-xl border border-white/5 bg-zinc-900 flex items-center justify-center shrink-0">
                 {feature.icon}
               </div>
               <h3 className="text-xl font-medium text-zinc-100 tracking-tight mt-4">

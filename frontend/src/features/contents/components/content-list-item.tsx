@@ -71,7 +71,7 @@ export function ContentListItem({ content }: ContentListItemProps) {
   return (
     <Link
       href={`/app/contents/${content.id}`}
-      className="w-full p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group hover:bg-zinc-900/40 transition-colors text-left focus:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+      className="w-full p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group hover:bg-white/5 transition-colors text-left focus:outline-none focus-visible:ring-1 focus-visible:ring-primary"
     >
       <div className="flex flex-col gap-1 min-w-0 flex-1 sm:w-2/5">
         <span className="text-sm font-medium text-zinc-100 truncate group-hover:text-white transition-colors">

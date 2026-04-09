@@ -35,3 +35,17 @@ export type PaymentCompanyOption = {
   id: string;
   name: string;
 };
+
+export type CreatePaymentInput = {
+  amount: number;
+  currency: string;
+  dueDate: string;
+  periodStart?: string;
+  periodEnd?: string;
+  notes?: string;
+};
+
+export type ChangePaymentStatusInput = {
+  status: PaymentStatus;
+  paidAt?: string;
+};

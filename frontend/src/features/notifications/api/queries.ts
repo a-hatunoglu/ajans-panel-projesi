@@ -70,3 +70,17 @@ export function useNotifications(
     },
   });
 }
+
+export function useUnreadCount(enabled = true) {
+  return useQuery({
+    queryKey: ["notifications-unread-count"],
+    enabled,
+    refetchInterval: 60_000,
+    queryFn: async (): Promise<number> => {
+      const response = await apiClient<UnreadCountResponse>(
+        "/notifications/unread-count",
+      );
+      return response.data.count;
+    },
+  });
+}

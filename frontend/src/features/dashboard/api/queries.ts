@@ -262,6 +262,7 @@ export function useDashboardData(role: string, enabled = true) {
           attention: attentionAvailable,
           schedule: scheduleAvailable,
         },
+        hasAnyCompany: companies ? companies.length > 0 : null,
       };
     },
   });

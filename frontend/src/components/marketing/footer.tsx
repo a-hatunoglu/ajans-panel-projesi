@@ -33,9 +33,9 @@ export function MarketingFooter() {
           <div className="flex flex-col gap-4">
             <h4 className="text-sm font-semibold text-white tracking-tight">{t("marketing.footer.legal")}</h4>
             <div className="flex flex-col gap-3 text-sm text-zinc-500">
-              <a href="#" className="hover:text-zinc-300 transition-colors">{t("marketing.footer.privacyPolicy")}</a>
-              <a href="#" className="hover:text-zinc-300 transition-colors">{t("marketing.footer.termsOfService")}</a>
-              <a href="#" className="hover:text-zinc-300 transition-colors">{t("marketing.footer.cookiePolicy")}</a>
+              <span className="text-zinc-600 cursor-default">{t("marketing.footer.privacyPolicy")}</span>
+              <span className="text-zinc-600 cursor-default">{t("marketing.footer.termsOfService")}</span>
+              <span className="text-zinc-600 cursor-default">{t("marketing.footer.cookiePolicy")}</span>
             </div>
           </div>
         </div>

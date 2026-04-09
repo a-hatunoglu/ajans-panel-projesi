@@ -33,6 +33,10 @@ export const qaFixture = {
     id: "0349f0bd-aa25-4cc0-8ea1-4dac3c9c340b",
     name: "Atlas Local Dev",
   },
+  company2: {
+    id: "a6e1c4d9-2f88-4b29-9e3c-75dfe0a11b42",
+    name: "Momentum Digital",
+  },
   contents: {
     draft: {
       id: "8501b9f4-ab59-4789-ae24-aea4b3d50184",
@@ -53,6 +57,24 @@ export const qaFixture = {
     scheduled: {
       id: "44a6e6eb-67c4-49cf-bbf0-f2a81f9e7d4f",
       title: "[QA] Workflow Scheduled",
+    },
+    published: {
+      id: "c3f8d1a2-5e47-4b9c-a6d3-8f2e1c9b7a05",
+      title: "[QA] Workflow Published",
+    },
+  },
+  contents2: {
+    draft: {
+      id: "e1a2b3c4-d5e6-4f78-9a0b-c1d2e3f40001",
+      title: "Momentum — Q2 Campaign Draft",
+    },
+    inReview: {
+      id: "e1a2b3c4-d5e6-4f78-9a0b-c1d2e3f40002",
+      title: "Momentum — Brand Awareness Post",
+    },
+    scheduled: {
+      id: "e1a2b3c4-d5e6-4f78-9a0b-c1d2e3f40003",
+      title: "Momentum — Product Launch Scheduled",
     },
   },
   payments: {

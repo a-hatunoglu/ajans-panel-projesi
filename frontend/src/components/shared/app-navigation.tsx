@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/providers/auth-provider";
 import { useI18n } from "@/i18n/provider";
 import { getNavigationItems } from "@/lib/navigation";
+import { useUnreadCount } from "@/features/notifications/api/queries";
 import { cn } from "@/lib/utils";
 
 type AppNavigationVariant = "desktop" | "mobile";
@@ -35,6 +36,8 @@ export function AppNavigation({
   const visibleNavItems = getNavigationItems(t).filter((item) =>
     item.allowedRoles.includes(userRole),
   );
+  const { data: unreadCount } = useUnreadCount();
+  const hasUnread = (unreadCount ?? 0) > 0;
 
   return (
     <nav
@@ -53,7 +56,7 @@ export function AppNavigation({
             href={item.href}
             onClick={onNavigate}
             className={cn(
-              "rounded-md transition-colors",
+              "flex items-center rounded-md transition-colors",
               variant === "desktop"
                 ? "px-2 py-1.5 text-sm"
                 : "px-3 py-2.5 text-sm font-medium",
@@ -63,6 +66,9 @@ export function AppNavigation({
             )}
           >
             {item.label}
+            {item.href === "/app/notifications" && hasUnread && (
+              <span className="ml-auto h-1.5 w-1.5 rounded-full bg-red-500 shrink-0" />
+            )}
           </Link>
         );
       })}

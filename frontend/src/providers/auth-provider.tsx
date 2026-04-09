@@ -1,11 +1,14 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useCallback, useEffect, useState } from "react";
 import { apiClient } from "@/lib/api-client";
 
-type User = {
+export type User = {
   id: string;
   email: string;
+  firstName: string;
+  lastName: string;
+  avatarUrl: string | null;
   role: string;
   companyId?: string | null;
 };
@@ -18,9 +21,16 @@ type ApiResponse<T> = {
 type AuthContextType = {
   user: User | null;
   isLoading: boolean;
+  updateUser: (data: Partial<User>) => void;
+  logout: () => Promise<void>;
 };
 
-const AuthContext = createContext<AuthContextType>({ user: null, isLoading: true });
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  isLoading: true,
+  updateUser: () => {},
+  logout: async () => {},
+});
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -44,8 +54,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     fetchSession();
   }, []);
 
+  const updateUser = (data: Partial<User>) => {
+    setUser((prev) => (prev ? { ...prev, ...data } : null));
+  };
+
+  const logout = useCallback(async () => {
+    try {
+      await apiClient("/auth/logout", { method: "POST" });
+    } catch {
+      // Proceed with client-side cleanup even if the request fails
+    }
+    setUser(null);
+    window.location.href = "/login";
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, isLoading }}>
+    <AuthContext.Provider value={{ user, isLoading, updateUser, logout }}>
       {children}
     </AuthContext.Provider>
   );

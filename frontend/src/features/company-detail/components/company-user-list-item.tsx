@@ -2,6 +2,7 @@
 
 import type { CompanyUserItem } from "../types";
 import { useLabels } from "@/lib/labels";
+import { UserAvatar } from "@/components/shared/user-avatar";
 
 interface CompanyUserListItemProps {
   member: CompanyUserItem;
@@ -58,46 +59,20 @@ function getActivityBadge(isActive: boolean, label: string) {
   );
 }
 
-function getInitials(name: string, email: string) {
-  const parts = name
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
-
-  if (parts.length >= 2) {
-    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-  }
-
-  if (parts.length === 1 && parts[0].length > 0) {
-    return parts[0].slice(0, 2).toUpperCase();
-  }
-
-  return email.slice(0, 2).toUpperCase();
-}
-
 export function CompanyUserListItem({ member }: CompanyUserListItemProps) {
   const { getUserActivityLabel, getUserRoleLabel } = useLabels();
   const roleLabel = getUserRoleLabel(member.role);
   const activityLabel = getUserActivityLabel(member.isActive);
-  const initials = getInitials(member.name, member.email);
 
   return (
-    <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between group hover:bg-white/5 transition-colors">
       <div className="flex min-w-0 items-center gap-3">
-        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-white/5 bg-zinc-900">
-          {member.avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={member.avatarUrl}
-              alt={member.name}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-xs font-medium text-zinc-300">
-              {initials}
-            </div>
-          )}
-        </div>
+        <UserAvatar
+          avatarUrl={member.avatarUrl}
+          name={member.name}
+          email={member.email}
+          size="md"
+        />
 
         <div className="min-w-0">
           <div className="truncate text-sm font-medium text-zinc-100">

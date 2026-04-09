@@ -1,8 +1,12 @@
 "use client";
 
+import { useState, useCallback } from "react";
+import { Plus, Share2 } from "lucide-react";
+import { useAuth } from "@/providers/auth-provider";
 import { useCompanySocialAccounts } from "../../api/queries";
 import { CompanyInlineStatePanel } from "../company-inline-state-panel";
 import { CompanySocialAccountListItem } from "../company-social-account-list-item";
+import { CreateSocialAccountDialog } from "../create-social-account-dialog";
 import { useI18n } from "@/i18n/provider";
 
 interface CompanySocialAccountsTabProps {
@@ -13,7 +17,22 @@ export function CompanySocialAccountsTab({
   companyId,
 }: CompanySocialAccountsTabProps) {
   const { t } = useI18n();
+  const { user } = useAuth();
+  const role = user?.role || "guest";
+  const canCreate = ["owner", "admin"].includes(role);
   const { data, isLoading, isError } = useCompanySocialAccounts(companyId);
+
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+
+  const handleCreateClick = useCallback(() => {
+    setCreateDialogOpen(true);
+  }, []);
+
+  const handleCreateClose = useCallback(() => {
+    setCreateDialogOpen(false);
+  }, []);
+
+  const isEmpty = !isLoading && !isError && data && data.accounts.length === 0;
 
   return (
     <section className="animate-in fade-in duration-500 rounded-xl border border-white/5 bg-zinc-950 p-5">
@@ -27,29 +46,67 @@ export function CompanySocialAccountsTab({
           </p>
         </div>
 
-        {!isLoading && !isError && data && (
-          <div className="text-xs text-zinc-500">
-            {t("companyDetail.social.connectedCount", {
-              count: data.accounts.length,
-            })}
-          </div>
-        )}
+        <div className="flex items-center gap-3">
+          {!isLoading && !isError && data && (
+            <div className="text-xs text-zinc-500">
+              {t("companyDetail.social.connectedCount", {
+                count: data.accounts.length,
+              })}
+            </div>
+          )}
+
+          {canCreate && (
+            <button
+              type="button"
+              onClick={handleCreateClick}
+              className="h-9 px-4 flex items-center gap-2 rounded-md bg-white text-black text-sm font-medium hover:bg-zinc-200 transition-colors shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+              {t("companyDetail.social.create.cta")}
+            </button>
+          )}
+        </div>
       </div>
 
+      {/* Loading */}
       {isLoading && (
         <CompanyInlineStatePanel message={t("companyDetail.social.loading")} />
       )}
 
-      {isError && (
-        <CompanyInlineStatePanel
-          message={t("companyDetail.social.error")}
-        />
+      {/* Error */}
+      {!isLoading && isError && (
+        <CompanyInlineStatePanel message={t("companyDetail.social.error")} />
       )}
 
-      {!isLoading && !isError && data && data.accounts.length === 0 && (
+      {/* Empty — admin CTA */}
+      {isEmpty && canCreate && (
+        <div className="rounded-xl border border-white/5 bg-zinc-950 p-12 text-center flex flex-col items-center">
+          <div className="h-10 w-10 rounded-lg bg-zinc-800/80 border border-white/5 flex items-center justify-center mb-4">
+            <Share2 className="w-5 h-5 text-zinc-500" />
+          </div>
+          <h2 className="mb-2 text-lg font-medium text-zinc-100">
+            {t("companyDetail.social.emptyAdmin.title")}
+          </h2>
+          <p className="mx-auto max-w-md text-sm text-zinc-500 mb-6">
+            {t("companyDetail.social.emptyAdmin.description")}
+          </p>
+          <button
+            type="button"
+            onClick={handleCreateClick}
+            className="h-9 px-4 flex items-center gap-2 rounded-md bg-white text-black text-sm font-medium hover:bg-zinc-200 transition-all"
+          >
+            <Plus className="w-4 h-4" />
+            {t("companyDetail.social.create.cta")}
+          </button>
+        </div>
+      )}
+
+      {/* Empty — non-admin */}
+      {isEmpty && !canCreate && (
         <CompanyInlineStatePanel message={t("companyDetail.social.empty")} />
       )}
 
+      {/* Populated list */}
       {!isLoading && !isError && data && data.accounts.length > 0 && (
         <div className="overflow-hidden rounded-lg border border-white/5 bg-zinc-900/20">
           {data.accounts.map((account, index) => (
@@ -62,6 +119,13 @@ export function CompanySocialAccountsTab({
           ))}
         </div>
       )}
+
+      {/* Create dialog */}
+      <CreateSocialAccountDialog
+        companyId={companyId}
+        open={createDialogOpen}
+        onClose={handleCreateClose}
+      />
     </section>
   );
 }

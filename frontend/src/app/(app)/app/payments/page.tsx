@@ -1,16 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { PageStatePanel } from "@/components/shared/page-state-panel";
 import { RestrictedAccessPanel } from "@/components/shared/restricted-access-panel";
 import { useAuth } from "@/providers/auth-provider";
 import { PageContainer } from "@/components/shared/page-container";
 import { PaymentListItem } from "@/features/payments/components/payment-list-item";
 import { PaymentsFilters } from "@/features/payments/components/payments-filters";
+import { CreatePaymentDialog } from "@/features/payments/components/create-payment-dialog";
 import { ContentsPagination } from "@/features/contents/components/contents-pagination";
 import { usePaymentCompanies, usePayments } from "@/features/payments/api/queries";
 import type { PaymentStatus } from "@/features/payments/types";
 import { useI18n } from "@/i18n/provider";
+import { CreditCard, Plus } from "lucide-react";
 
 const PER_PAGE = 20;
 
@@ -19,9 +21,15 @@ export default function PaymentsPage() {
   const { user, isLoading: isAuthLoading } = useAuth();
   const role = user?.role || "guest";
   const canView = ["owner", "admin"].includes(role);
+  const canManage = ["owner", "admin"].includes(role);
   const [status, setStatus] = useState<PaymentStatus | "all">("all");
   const [companyId, setCompanyId] = useState("");
   const [page, setPage] = useState(1);
+  const [createOpen, setCreateOpen] = useState(false);
+
+  const handleCreateSuccess = useCallback(() => {
+    setCreateOpen(false);
+  }, []);
 
   const queryParams = useMemo(
     () => ({
@@ -100,9 +108,21 @@ export default function PaymentsPage() {
 
   return (
     <PageContainer className="animate-in fade-in duration-500 pb-12 max-w-5xl">
-      <div className="mb-6">
-        <h1 className="text-2xl font-medium tracking-tight text-white mb-1">{t("payments.pageTitle")}</h1>
-        <p className="text-sm text-zinc-400">{t("payments.pageSubtitle")}</p>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-medium tracking-tight text-white mb-1">{t("payments.pageTitle")}</h1>
+          <p className="text-sm text-zinc-400">{t("payments.pageSubtitle")}</p>
+        </div>
+        {canManage && (
+          <button
+            type="button"
+            onClick={() => setCreateOpen(true)}
+            className="h-9 px-4 flex items-center gap-2 bg-white text-black text-sm font-medium rounded-md hover:bg-zinc-200 transition-all shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            {t("payments.recordPayment")}
+          </button>
+        )}
       </div>
 
       <PaymentsFilters
@@ -137,14 +157,19 @@ export default function PaymentsPage() {
         </div>
 
         {payments.map((payment) => (
-          <PaymentListItem key={payment.id} item={payment} />
+          <PaymentListItem key={payment.id} item={payment} canManage={canManage} />
         ))}
 
         {payments.length === 0 && (
-          <div className="py-12 text-center text-sm text-zinc-500">
-            {hasActiveFilters
-              ? t("payments.emptyFilteredState")
-              : t("payments.emptyState")}
+          <div className="p-12 text-center flex flex-col items-center">
+            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg border border-white/5 bg-zinc-800/80">
+              <CreditCard className="h-5 w-5 text-zinc-500" />
+            </div>
+            <h2 className="mb-2 text-base font-medium text-zinc-300">
+              {hasActiveFilters
+                ? t("payments.emptyFilteredState")
+                : t("payments.emptyState")}
+            </h2>
           </div>
         )}
 
@@ -156,6 +181,12 @@ export default function PaymentsPage() {
           />
         )}
       </div>
+
+      <CreatePaymentDialog
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onSuccess={handleCreateSuccess}
+      />
     </PageContainer>
   );
 }

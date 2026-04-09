@@ -51,4 +51,5 @@ export type DashboardData = {
   attentionItems: AttentionItem[];
   scheduleItems: ScheduleItem[];
   sections: DashboardSections;
+  hasAnyCompany: boolean | null;
 };

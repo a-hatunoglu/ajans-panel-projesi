@@ -4,6 +4,7 @@ import { ActivityItem } from "../types";
 import { useUiCopy } from "@/lib/copy";
 import { useFormatters } from "@/lib/formatters";
 import { useLabels } from "@/lib/labels";
+import { UserAvatar } from "@/components/shared/user-avatar";
 
 export function ActivityListItem({ item }: { item: ActivityItem }) {
   const uiCopy = useUiCopy();
@@ -13,13 +14,12 @@ export function ActivityListItem({ item }: { item: ActivityItem }) {
   const companyLabel = item.companyName || uiCopy.globalScope;
 
   return (
-    <div className="w-full p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group hover:bg-zinc-900/40 transition-colors text-left border-b border-white/5 last:border-0">
+    <div className="w-full p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group hover:bg-white/5 transition-colors text-left">
       <div className="flex items-center gap-3 min-w-0 flex-1">
-        <div className="w-8 h-8 rounded-full border border-white/5 flex items-center justify-center shrink-0 bg-zinc-900 text-zinc-300">
-          <span className="text-[10px] font-medium font-mono uppercase">
-            {item.actorName.charAt(0)}
-          </span>
-        </div>
+        <UserAvatar
+          name={item.actorName}
+          size="sm"
+        />
 
         <div className="flex flex-col gap-1 min-w-0">
           <div className="flex flex-wrap items-center gap-1.5 text-sm leading-snug">

@@ -2,6 +2,8 @@
 
 This frontend is a Next.js App Router application for the authenticated agency app and marketing site.
 
+> **New here?** See the [Quickstart](../QUICKSTART.md) for the full-stack setup including backend, database, and demo data.
+
 ## Local development
 
 The local default is:

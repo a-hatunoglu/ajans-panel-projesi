@@ -5,12 +5,20 @@ import { useI18n } from "@/i18n/provider";
 import { useLabels } from "@/lib/labels";
 import { useFormatters } from "@/lib/formatters";
 import { useUiCopy } from "@/lib/copy";
+import { useChangePaymentStatus } from "../api/mutations";
+import { CheckCircle, Loader2 } from "lucide-react";
 
-export function PaymentListItem({ item }: { item: PaymentItem }) {
+interface PaymentListItemProps {
+  item: PaymentItem;
+  canManage?: boolean;
+}
+
+export function PaymentListItem({ item, canManage }: PaymentListItemProps) {
   const { t } = useI18n();
   const { getPaymentDisplayDateLabel, getPaymentStatusLabel } = useLabels();
   const { formatCurrencyAmount, formatPaymentPeriod, formatShortDate } = useFormatters();
   const uiCopy = useUiCopy();
+  const statusMutation = useChangePaymentStatus();
 
   const getStatusDisplay = (status: PaymentItem["status"]) => {
     const label = getPaymentStatusLabel(status);
@@ -25,12 +33,18 @@ export function PaymentListItem({ item }: { item: PaymentItem }) {
     }
   };
 
+  const handleMarkAsPaid = () => {
+    if (statusMutation.isPending) return;
+    statusMutation.mutate({ paymentId: item.id, status: "paid" });
+  };
+
   const displayDateAt = item.status === "paid" && item.paidAt ? item.paidAt : item.dueDate;
   const periodLabel = formatPaymentPeriod(item.periodStart, item.periodEnd);
   const displayDateLabel = getPaymentDisplayDateLabel(item.status, item.paidAt);
+  const showMarkAsPaid = canManage && item.status !== "paid";
 
   return (
-    <div className="w-full p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group hover:bg-zinc-900/40 transition-colors text-left border-l-2 border-transparent">
+    <div className="w-full p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group hover:bg-white/5 transition-colors text-left">
       <div className="flex flex-col gap-1 sm:w-1/3 min-w-0">
         <span className="text-sm font-medium text-zinc-200 truncate group-hover:text-white transition-colors">
           {item.companyName || uiCopy.companyUnavailable}
@@ -61,7 +75,24 @@ export function PaymentListItem({ item }: { item: PaymentItem }) {
           <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
             {t("payments.table.status")}
           </span>
-          {getStatusDisplay(item.status)}
+          <div className="flex items-center gap-2">
+            {getStatusDisplay(item.status)}
+            {showMarkAsPaid && (
+              <button
+                type="button"
+                onClick={handleMarkAsPaid}
+                disabled={statusMutation.isPending}
+                className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-400 hover:text-emerald-300 transition-colors disabled:opacity-50"
+              >
+                {statusMutation.isPending ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <CheckCircle className="w-3 h-3" />
+                )}
+                {t("payments.markAsPaid")}
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -82,10 +113,26 @@ export function PaymentListItem({ item }: { item: PaymentItem }) {
           </span>
         </div>
 
-        <div className="flex w-24 shrink-0 justify-end text-right">
+        <div className="flex flex-1 shrink-0 items-center justify-end gap-3 text-right">
           {getStatusDisplay(item.status)}
+          {showMarkAsPaid && (
+            <button
+              type="button"
+              onClick={handleMarkAsPaid}
+              disabled={statusMutation.isPending}
+              className="inline-flex items-center gap-1 text-xs font-medium text-zinc-500 hover:text-emerald-400 transition-colors disabled:opacity-50 opacity-0 group-hover:opacity-100"
+            >
+              {statusMutation.isPending ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <CheckCircle className="w-3.5 h-3.5" />
+              )}
+              {t("payments.markAsPaid")}
+            </button>
+          )}
         </div>
       </div>
     </div>
   );
 }
+

@@ -6,9 +6,10 @@ import { useI18n } from "@/i18n/provider";
 
 interface CompaniesToolbarProps {
   isAdmin: boolean;
+  onCreateClick?: () => void;
 }
 
-export function CompaniesToolbar({ isAdmin }: CompaniesToolbarProps) {
+export function CompaniesToolbar({ isAdmin, onCreateClick }: CompaniesToolbarProps) {
   const uiCopy = useUiCopy();
   const { t } = useI18n();
 
@@ -38,9 +39,8 @@ export function CompaniesToolbar({ isAdmin }: CompaniesToolbarProps) {
       {isAdmin && (
         <button
           type="button"
-          disabled
-          title={uiCopy.disabledActionTitle}
-          className="h-9 px-4 flex items-center gap-2 rounded-md border border-zinc-800 bg-zinc-900/50 text-zinc-500 text-sm font-medium transition-colors shrink-0 cursor-not-allowed opacity-70"
+          onClick={onCreateClick}
+          className="h-9 px-4 flex items-center gap-2 rounded-md bg-white text-black text-sm font-medium hover:bg-zinc-200 transition-colors shrink-0"
         >
           <Plus className="w-4 h-4" />
           {t("companies.toolbar.addCompany")}

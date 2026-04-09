@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { PageContainer } from "@/components/shared/page-container";
+import { Bell } from "lucide-react";
 import { PageStatePanel } from "@/components/shared/page-state-panel";
 import { ContentsPagination } from "@/features/contents/components/contents-pagination";
 import { useMarkAllNotificationsAsReadMutation, useMarkNotificationAsReadMutation } from "@/features/notifications/api/mutations";
@@ -84,7 +85,7 @@ export default function NotificationsPage() {
 
   return (
     <PageContainer className="animate-in fade-in duration-500 pb-12 max-w-4xl">
-      <div className="mb-2">
+      <div className="mb-6">
         <div>
           <h1 className="mb-1 text-2xl font-medium tracking-tight text-white">{t("notifications.pageTitle")}</h1>
           <p className="text-sm text-zinc-400">
@@ -123,17 +124,22 @@ export default function NotificationsPage() {
               markNotificationAsRead.isPending &&
               markNotificationAsRead.variables === notification.id
             }
-            onMarkAsRead={(notificationId) => {
-              markNotificationAsRead.mutate(notificationId);
+            onMarkAsRead={async (notificationId) => {
+              await markNotificationAsRead.mutateAsync(notificationId);
             }}
           />
         ))}
 
         {notifications.length === 0 && (
-          <div className="py-12 text-center text-sm text-zinc-500">
-            {hasActiveFilters
-              ? t("notifications.emptyFilteredState")
-              : t("notifications.emptyState")}
+          <div className="p-12 text-center flex flex-col items-center">
+            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg border border-white/5 bg-zinc-800/80">
+              <Bell className="h-5 w-5 text-zinc-500" />
+            </div>
+            <h2 className="mb-2 text-base font-medium text-zinc-300">
+              {hasActiveFilters
+                ? t("notifications.emptyFilteredState")
+                : t("notifications.emptyState")}
+            </h2>
           </div>
         )}
 

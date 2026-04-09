@@ -37,14 +37,17 @@ function FieldError({ message }: { message?: string }) {
 function FieldNote({
   message,
   tone = "muted",
+  children,
 }: {
   message: string;
   tone?: "muted" | "warning";
+  children?: React.ReactNode;
 }) {
   return (
-    <p className={tone === "warning" ? "mt-2 text-xs text-amber-300/80" : "mt-2 text-xs text-zinc-500"}>
-      {message}
-    </p>
+    <div className={tone === "warning" ? "mt-2 text-xs text-amber-300/80" : "mt-2 text-xs text-zinc-500"}>
+      <p>{message}</p>
+      {children && <div className="mt-1.5">{children}</div>}
+    </div>
   );
 }
 
@@ -334,7 +337,16 @@ export function ContentCreateForm({
           </select>
           <FieldError message={errors.socialAccountId?.message} />
           {socialAccountsMessage && (
-            <FieldNote message={socialAccountsMessage} tone="warning" />
+            <FieldNote message={socialAccountsMessage} tone="warning">
+              {socialAccounts.length === 0 && !socialAccountsQuery.isLoading && !socialAccountsQuery.isError && selectedCompanyId ? (
+                <Link
+                  href={`/app/companies/${selectedCompanyId}?tab=social`}
+                  className="font-medium text-amber-200 underline hover:text-amber-100 transition-colors"
+                >
+                  {t("contentCreate.form.noSocialAccountsAction")}
+                </Link>
+              ) : null}
+            </FieldNote>
           )}
         </div>
 
@@ -398,7 +410,16 @@ export function ContentCreateForm({
             <FieldNote message={t("contentCreate.form.designerLockedHint")} />
           )}
           {designerMessage && (
-            <FieldNote message={designerMessage} tone="warning" />
+            <FieldNote message={designerMessage} tone="warning">
+              {designerOptions.length === 0 && !membersQuery.isLoading && !membersQuery.isError && selectedCompanyId ? (
+                <Link
+                  href={`/app/companies/${selectedCompanyId}?tab=users`}
+                  className="font-medium text-amber-200 underline hover:text-amber-100 transition-colors"
+                >
+                  {t("contentCreate.form.noDesignersAction")}
+                </Link>
+              ) : null}
+            </FieldNote>
           )}
         </div>
 
@@ -424,7 +445,16 @@ export function ContentCreateForm({
             <FieldNote message={t("contentCreate.form.editorPrefillHint")} />
           )}
           {editorMessage && (
-            <FieldNote message={editorMessage} tone="warning" />
+            <FieldNote message={editorMessage} tone="warning">
+              {editorOptions.length === 0 && !membersQuery.isLoading && !membersQuery.isError && selectedCompanyId ? (
+                <Link
+                  href={`/app/companies/${selectedCompanyId}?tab=users`}
+                  className="font-medium text-amber-200 underline hover:text-amber-100 transition-colors"
+                >
+                  {t("contentCreate.form.noEditorsAction")}
+                </Link>
+              ) : null}
+            </FieldNote>
           )}
         </div>
       </div>

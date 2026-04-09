@@ -3,6 +3,8 @@ export type NotificationItem = {
   type: string;
   title: string;
   message: string | null;
+  resourceType: string | null;
+  resourceId: string | null;
   createdAt: string;
   isRead: boolean;
 };

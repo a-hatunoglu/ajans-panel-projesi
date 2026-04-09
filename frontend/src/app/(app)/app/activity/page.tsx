@@ -14,6 +14,7 @@ import type {
   ActivityResourceTypeFilter,
 } from "@/features/activity/types";
 import { useI18n } from "@/i18n/provider";
+import { Activity } from "lucide-react";
 
 const PER_PAGE = 20;
 
@@ -123,27 +124,30 @@ export default function ActivityPage() {
         </div>
       )}
 
-      <div className="border border-white/5 rounded-xl bg-zinc-950 flex flex-col overflow-hidden">
+      <div className="border border-white/5 rounded-xl bg-zinc-950 flex flex-col divide-y divide-white/5 overflow-hidden">
         {activities.map((activity) => (
           <ActivityListItem key={activity.id} item={activity} />
         ))}
 
         {activities.length === 0 && (
-          <div className="py-12 text-center text-sm text-zinc-500">
-            {hasActiveFilters
-              ? t("activity.emptyFilteredState")
-              : t("activity.emptyState")}
+          <div className="p-12 text-center flex flex-col items-center">
+            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg border border-white/5 bg-zinc-800/80">
+              <Activity className="h-5 w-5 text-zinc-500" />
+            </div>
+            <h2 className="mb-2 text-base font-medium text-zinc-300">
+              {hasActiveFilters
+                ? t("activity.emptyFilteredState")
+                : t("activity.emptyState")}
+            </h2>
           </div>
         )}
 
         {meta && meta.total > 0 && (
-          <div className="border-t border-white/5">
-            <ContentsPagination
-              meta={meta}
-              isFetching={isFetching}
-              onPageChange={setPage}
-            />
-          </div>
+          <ContentsPagination
+            meta={meta}
+            isFetching={isFetching}
+            onPageChange={setPage}
+          />
         )}
       </div>
     </PageContainer>

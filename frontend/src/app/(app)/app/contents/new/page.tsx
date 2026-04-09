@@ -7,6 +7,7 @@ import { useCreateCompanyOptions } from "@/features/content-create/api/queries";
 import { ContentCreateForm } from "@/features/content-create/components/content-create-form";
 import { useI18n } from "@/i18n/provider";
 import { useAuth } from "@/providers/auth-provider";
+import Link from "next/link";
 
 export default function ContentCreatePage() {
   const { t } = useI18n();
@@ -71,7 +72,14 @@ export default function ContentCreatePage() {
         title={t("contentCreate.emptyTitle")}
         description={t("contentCreate.emptyDescription")}
         className="max-w-5xl"
-      />
+      >
+        <Link
+          href="/app/companies"
+          className="inline-flex h-9 items-center justify-center rounded-md bg-white px-4 text-sm font-medium text-black transition-colors hover:bg-zinc-200"
+        >
+          {t("contentCreate.emptyAction")}
+        </Link>
+      </PageStatePanel>
     );
   }
 

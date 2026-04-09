@@ -2,6 +2,8 @@
 
 Social media agency management platform. Express + Prisma + PostgreSQL backend.
 
+> **New here?** See the [Quickstart](./QUICKSTART.md) for a complete clone-to-demo guide including frontend, seed data, and demo credentials.
+
 ## Prerequisites
 
 - **Node.js** >= 20 (`engines` field in `package.json`)

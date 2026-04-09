@@ -49,7 +49,7 @@ export function CompanySocialAccountListItem({
   const initials = getAccountInitials(account.accountName);
 
   return (
-    <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between group hover:bg-white/5 transition-colors">
       <div className="flex min-w-0 items-center gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/5 bg-zinc-900 text-xs font-medium text-zinc-300">
           {initials}

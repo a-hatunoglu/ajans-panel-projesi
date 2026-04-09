@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import type { ScheduleItem } from "../types";
 import { useI18n } from "@/i18n/provider";
 import { useUiCopy } from "@/lib/copy";
@@ -51,18 +52,21 @@ export function UpcomingSchedule({ items }: { items: ScheduleItem[] }) {
           <Link
             key={item.id}
             href={`/app/contents/${item.id}`}
-            className="p-4 flex items-center justify-between gap-4 group hover:bg-zinc-900/30 transition-colors"
+            className="p-4 flex items-center justify-between gap-4 group hover:bg-white/5 transition-colors text-left w-full"
           >
             <div className="flex min-w-0 flex-col gap-1">
-              <span className="truncate text-sm text-zinc-200">{item.title}</span>
+              <span className="truncate text-sm text-zinc-200 group-hover:text-white transition-colors">{item.title}</span>
               <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-zinc-500">
                 <span className="truncate">{contextLabel}</span>
                 <span>|</span>
                 <span className="truncate">{item.companyName}</span>
               </div>
             </div>
-            <div className="shrink-0 text-xs tabular-nums text-zinc-400">
-              {formatScheduleDateTime(item.scheduledAt)}
+            <div className="flex items-center gap-4 shrink-0">
+              <div className="text-xs tabular-nums text-zinc-400">
+                {formatScheduleDateTime(item.scheduledAt)}
+              </div>
+              <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 transition-colors hidden sm:block" />
             </div>
           </Link>
         );

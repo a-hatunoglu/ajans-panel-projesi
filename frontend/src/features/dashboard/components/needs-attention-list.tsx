@@ -35,7 +35,7 @@ export function NeedsAttentionList({ items }: { items: AttentionItem[] }) {
         <Link
           key={item.id}
           href={`/app/contents/${item.id}`}
-          className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group hover:bg-zinc-900/40 transition-colors text-left w-full"
+          className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group hover:bg-white/5 transition-colors text-left w-full"
         >
           <div className="flex flex-col gap-1 min-w-0">
             <div className="flex items-center gap-2">
