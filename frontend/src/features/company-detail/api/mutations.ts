@@ -158,3 +158,67 @@ export function useInvitePlatformUserMutation() {
     },
   });
 }
+
+// ─── Update Company ──────────────────────────────────────────
+
+export type UpdateCompanyPayload = {
+  name?: string;
+  website?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+  notes?: string | null;
+};
+
+export function useUpdateCompanyMutation(companyId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: UpdateCompanyPayload) => {
+      return apiClient(`/companies/${companyId}`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["company-detail", companyId],
+        }),
+        queryClient.invalidateQueries({ queryKey: ["companies"] }),
+      ]);
+    },
+  });
+}
+
+// ─── Update User ─────────────────────────────────────────────
+
+export type UpdateUserPayload = {
+  firstName?: string;
+  lastName?: string;
+  role?: "admin" | "editor" | "designer" | "client";
+};
+
+export function useUpdateUserMutation(companyId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      ...payload
+    }: UpdateUserPayload & { userId: string }) => {
+      return apiClient(`/users/${userId}`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["company-users", companyId],
+        }),
+        queryClient.invalidateQueries({ queryKey: ["system-users"] }),
+      ]);
+    },
+  });
+}

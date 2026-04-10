@@ -1,11 +1,15 @@
 "use client";
 
+import { Pencil } from "lucide-react";
 import type { CompanyUserItem } from "../types";
 import { useLabels } from "@/lib/labels";
+import { useI18n } from "@/i18n/provider";
 import { UserAvatar } from "@/components/shared/user-avatar";
 
 interface CompanyUserListItemProps {
   member: CompanyUserItem;
+  canEdit?: boolean;
+  onEdit?: (member: CompanyUserItem) => void;
 }
 
 function getRoleBadge(role: CompanyUserItem["role"], label: string) {
@@ -59,10 +63,18 @@ function getActivityBadge(isActive: boolean, label: string) {
   );
 }
 
-export function CompanyUserListItem({ member }: CompanyUserListItemProps) {
+export function CompanyUserListItem({
+  member,
+  canEdit = false,
+  onEdit,
+}: CompanyUserListItemProps) {
+  const { t } = useI18n();
   const { getUserActivityLabel, getUserRoleLabel } = useLabels();
   const roleLabel = getUserRoleLabel(member.role);
   const activityLabel = getUserActivityLabel(member.isActive);
+
+  // Owner cannot be edited via this endpoint
+  const showEdit = canEdit && onEdit && member.role !== "owner";
 
   return (
     <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between group hover:bg-white/5 transition-colors">
@@ -85,7 +97,18 @@ export function CompanyUserListItem({ member }: CompanyUserListItemProps) {
       <div className="flex flex-wrap items-center gap-2 sm:justify-end">
         {getRoleBadge(member.role, roleLabel)}
         {getActivityBadge(member.isActive, activityLabel)}
+        {showEdit && (
+          <button
+            type="button"
+            onClick={() => onEdit(member)}
+            className="ml-1 flex items-center gap-1 rounded-md border border-white/10 px-2 py-1 text-[11px] font-medium text-zinc-500 opacity-0 transition-all group-hover:opacity-100 hover:bg-white/5 hover:text-zinc-300 sm:ml-2"
+          >
+            <Pencil className="w-3 h-3" />
+            {t("companyDetail.editUser.cta")}
+          </button>
+        )}
       </div>
     </div>
   );
 }
+

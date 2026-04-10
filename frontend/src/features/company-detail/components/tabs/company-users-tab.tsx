@@ -7,8 +7,10 @@ import { useCompanyUsers } from "../../api/queries";
 import { CompanyInlineStatePanel } from "../company-inline-state-panel";
 import { CompanyUserListItem } from "../company-user-list-item";
 import { AddCompanyUserDialog } from "../add-company-user-dialog";
+import { EditUserDialog } from "../edit-user-dialog";
 import { useLabels } from "@/lib/labels";
 import { useI18n } from "@/i18n/provider";
+import type { CompanyUserItem } from "../../types";
 
 interface CompanyUsersTabProps {
   companyId: string;
@@ -23,6 +25,7 @@ export function CompanyUsersTab({ companyId }: CompanyUsersTabProps) {
   const { data, isLoading, isError } = useCompanyUsers(companyId);
 
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<CompanyUserItem | null>(null);
 
   const handleAddClick = useCallback(() => {
     setAddDialogOpen(true);
@@ -112,7 +115,11 @@ export function CompanyUsersTab({ companyId }: CompanyUsersTabProps) {
               key={member.membershipId}
               className={index === data.members.length - 1 ? "" : "border-b border-white/5"}
             >
-              <CompanyUserListItem member={member} />
+              <CompanyUserListItem
+                member={member}
+                canEdit={canManage}
+                onEdit={(m) => setEditingUser(m)}
+              />
             </div>
           ))}
         </div>
@@ -125,6 +132,16 @@ export function CompanyUsersTab({ companyId }: CompanyUsersTabProps) {
         open={addDialogOpen}
         onClose={handleAddClose}
       />
+
+      {/* Edit user dialog */}
+      {editingUser && (
+        <EditUserDialog
+          companyId={companyId}
+          user={editingUser}
+          open={!!editingUser}
+          onClose={() => setEditingUser(null)}
+        />
+      )}
     </section>
   );
 }

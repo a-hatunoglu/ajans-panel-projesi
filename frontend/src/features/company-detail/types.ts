@@ -147,3 +147,18 @@ export type CompanyActivityListData = {
   items: CompanyActivityItem[];
   meta: ContentsListMeta;
 };
+
+export type UpdateCompanyInput = {
+  name?: string;
+  website?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+  notes?: string | null;
+};
+
+export type UpdateUserInput = {
+  firstName?: string;
+  lastName?: string;
+  role?: "admin" | "editor" | "designer" | "client";
+};
