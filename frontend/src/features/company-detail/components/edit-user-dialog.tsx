@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { X, Loader2, UserCog } from "lucide-react";
 import { useI18n } from "@/i18n/provider";
+import { useAuth } from "@/providers/auth-provider";
 import { useUpdateUserMutation } from "../api/mutations";
 import type { CompanyUserItem } from "../types";
 
@@ -41,6 +42,7 @@ export function EditUserDialog({
   onClose,
 }: EditUserDialogProps) {
   const { t } = useI18n();
+  const { user: currentUser, updateUser } = useAuth();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const mutation = useUpdateUserMutation(companyId);
 
@@ -89,6 +91,24 @@ export function EditUserDialog({
         lastName: data.lastName,
         role: data.role,
       });
+
+      // Sync auth context when editing self
+      if (currentUser && user.userId === currentUser.id) {
+        const roleChanged = data.role !== currentUser.role;
+
+        updateUser({
+          firstName: data.firstName,
+          lastName: data.lastName,
+          role: data.role,
+        });
+
+        if (roleChanged) {
+          // Role change invalidates nav/permissions — reload to reset shell
+          window.location.href = "/app";
+          return;
+        }
+      }
+
       onClose();
     } catch (err: unknown) {
       const message =
