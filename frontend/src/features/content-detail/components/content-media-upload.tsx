@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { UploadCloud, X, Loader2, Image as ImageIcon, FileVideo } from "lucide-react";
+import { UploadCloud, X, Loader2, Image as ImageIcon } from "lucide-react";
 import { useI18n } from "@/i18n/provider";
-import { ContentDetailData, ContentMediaItem } from "../types";
+import { ContentMediaItem } from "../types";
 import { apiClient } from "@/lib/api-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/providers/auth-provider";

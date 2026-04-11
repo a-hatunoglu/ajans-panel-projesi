@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { useAuth } from "@/providers/auth-provider";
 import { useCompanyPayments, useCompanyDetail } from "../../api/queries";
