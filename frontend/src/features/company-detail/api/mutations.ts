@@ -137,7 +137,6 @@ type InviteUserResponse = {
   success: boolean;
   data: {
     user: SystemUser;
-    inviteToken: string;
   };
 };
 

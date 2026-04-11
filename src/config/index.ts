@@ -26,6 +26,21 @@ const envSchema = z.object({
   // Rate Limiting
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60000),
   RATE_LIMIT_MAX: z.coerce.number().default(100),
+  RATE_LIMIT_AUTH_MAX: z.coerce.number().default(5),
+
+  // SMTP (Optional — if not configured, emails are skipped with warning)
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().default(465),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  EMAIL_FROM: z.string().default('noreply@agencyos.app'),
+
+  // Storage (S3 / R2 / MinIO) - Optional for fallback
+  STORAGE_S3_ACCESS_KEY: z.string().optional(),
+  STORAGE_S3_SECRET: z.string().optional(),
+  STORAGE_S3_REGION: z.string().optional(),
+  STORAGE_S3_BUCKET: z.string().optional(),
+  STORAGE_S3_ENDPOINT: z.string().optional(), // Used for non-AWS (R2, MinIO, DigitalOcean)
 });
 
 const parsed = envSchema.safeParse(process.env);

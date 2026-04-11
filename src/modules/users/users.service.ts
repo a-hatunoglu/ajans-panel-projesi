@@ -12,6 +12,7 @@ import {
 import { canManageRole } from '../../middleware/authorize';
 import { InviteUserInput, UpdateMeInput, ChangePasswordInput, UpdateUserInput } from './users.schema';
 import { parsePagination, createPaginationMeta, PaginationQuery } from '../../shared/utils/pagination';
+import { sendInviteEmail, sendResetEmail } from '../../shared/services/mailer';
 
 const USER_SAFE_SELECT = {
   id: true,
@@ -110,9 +111,10 @@ export async function inviteUser(data: InviteUserInput, actorRole: string) {
     select: USER_SAFE_SELECT,
   });
 
-  // NOT: E-posta entegrasyonu ileride eklenecek.
-  // Şimdilik raw token response'da dönüyor (admin paylaşır).
-  return { user, inviteToken: rawToken };
+  // Send invite email — awaited so delivery failure propagates
+  await sendInviteEmail(data.email, data.firstName, rawToken);
+
+  return { user };
 }
 
 // ─── List Users ──────────────────────────────────────────────
@@ -237,7 +239,8 @@ export async function sendResetLink(targetId: string, actorRole: string) {
     },
   });
 
-  // NOT: E-posta entegrasyonu ileride eklenecek.
-  // Şimdilik raw token response'da dönüyor.
-  return { resetToken: rawToken, message: 'Şifre sıfırlama linki oluşturuldu.' };
+  // Send reset email — awaited so delivery failure propagates
+  await sendResetEmail(target.email, target.firstName, rawToken);
+
+  return { message: 'Şifre sıfırlama linki gönderildi.' };
 }

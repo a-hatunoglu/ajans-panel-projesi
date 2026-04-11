@@ -22,7 +22,12 @@ export const resetPasswordSchema = z.object({
   password: z.string().min(8, 'Şifre en az 8 karakter olmalıdır.'),
 });
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().email('Geçerli bir e-posta adresi giriniz.'),
+});
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type AcceptInviteInput = z.infer<typeof acceptInviteSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;

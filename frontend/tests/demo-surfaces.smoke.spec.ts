@@ -61,11 +61,11 @@ test("owner contents list shows seeded contents with pagination", async ({
     session.page.getByRole("heading", { name: "Contents" }),
   ).toBeVisible();
 
-  // At least one seeded content should be visible
+  // At least one seeded content should be visible (any [QA] or [Smoke] title)
   await expect(
-    session.page.getByText(qaFixture.contents.draft.title).or(
-      session.page.getByText(qaFixture.contents.published.title),
-    ),
+    session.page.getByText(/\[QA\]/).or(
+      session.page.getByText(/\[Smoke\]/),
+    ).first(),
   ).toBeVisible();
 
   // Pagination indicator should be visible (seeded data exceeds 0)

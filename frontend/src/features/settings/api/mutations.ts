@@ -26,3 +26,33 @@ export function useUpdateProfileMutation() {
     },
   });
 }
+
+// ─── Change Password ──────────────────────────────────────────
+
+type ChangePasswordPayload = {
+  currentPassword: string;
+  newPassword: string;
+};
+
+type ChangePasswordResponse = {
+  success: boolean;
+  data: {
+    message: string;
+  };
+};
+
+export function useChangePasswordMutation() {
+  return useMutation({
+    mutationFn: async (payload: ChangePasswordPayload) => {
+      const response = await apiClient<ChangePasswordResponse>(
+        "/users/me/password",
+        {
+          method: "PUT",
+          body: JSON.stringify(payload),
+        }
+      );
+      return response.data;
+    },
+  });
+}
+

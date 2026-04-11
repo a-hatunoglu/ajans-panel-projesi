@@ -38,6 +38,14 @@ export type ContentComment = {
   type: "comment" | "approval" | "rejection";
 };
 
+export type ContentMediaItem = {
+  id: string;
+  url: string;
+  fileType: string;
+  sizeBytes: number;
+  createdAt: string;
+};
+
 export type ContentDetailData = {
   id: string;
   title: string;
@@ -54,4 +62,5 @@ export type ContentDetailData = {
   assignedEditor: ContentAssignment | null;
   versions: ContentVersion[];
   comments: ContentComment[];
+  media: ContentMediaItem[];
 };

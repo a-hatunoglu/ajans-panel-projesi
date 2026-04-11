@@ -27,18 +27,20 @@ interface CreatePaymentDialogProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  fixedCompany?: { id: string; name: string };
 }
 
 export function CreatePaymentDialog({
   open,
   onClose,
   onSuccess,
+  fixedCompany,
 }: CreatePaymentDialogProps) {
   const { t } = useI18n();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const mutation = useCreatePayment();
   const { data: companyOptions = [], isLoading: isCompaniesLoading } =
-    usePaymentCompanies(open);
+    usePaymentCompanies(open && !fixedCompany);
 
   const schema = useMemo(() => createPaymentSchema(t), [t]);
 
@@ -59,6 +61,13 @@ export function CreatePaymentDialog({
       notes: "",
     },
   });
+
+  // Automatically set companyId if fixedCompany is provided
+  useMemo(() => {
+    if (fixedCompany && open) {
+      reset((prev) => ({ ...prev, companyId: fixedCompany.id }));
+    }
+  }, [fixedCompany, open, reset]);
 
   const handleClose = useCallback(() => {
     if (mutation.isPending) return;
@@ -145,23 +154,32 @@ export function CreatePaymentDialog({
             >
               {t("payments.create.form.company")} *
             </label>
-            <select
-              id="payment-company"
-              disabled={mutation.isPending || isCompaniesLoading}
-              className={inputClassName}
-              {...register("companyId")}
-            >
-              <option value="">
-                {isCompaniesLoading
-                  ? t("payments.create.form.companiesLoading")
-                  : t("payments.create.form.companyPlaceholder")}
-              </option>
-              {companyOptions.map((company) => (
-                <option key={company.id} value={company.id}>
-                  {company.name}
+            {fixedCompany ? (
+              <>
+                <div className="flex h-9 w-full rounded-md border border-zinc-800 bg-zinc-900/50 px-3 py-2 text-sm text-zinc-400">
+                  {fixedCompany.name}
+                </div>
+                <input type="hidden" {...register("companyId")} />
+              </>
+            ) : (
+              <select
+                id="payment-company"
+                disabled={mutation.isPending || isCompaniesLoading}
+                className={inputClassName}
+                {...register("companyId")}
+              >
+                <option value="">
+                  {isCompaniesLoading
+                    ? t("payments.create.form.companiesLoading")
+                    : t("payments.create.form.companyPlaceholder")}
                 </option>
-              ))}
-            </select>
+                {companyOptions.map((company) => (
+                  <option key={company.id} value={company.id}>
+                    {company.name}
+                  </option>
+                ))}
+              </select>
+            )}
             {errors.companyId && (
               <span className="text-xs text-red-500">
                 {errors.companyId.message}

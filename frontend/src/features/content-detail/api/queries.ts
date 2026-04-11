@@ -35,6 +35,13 @@ type ContentResponse = {
       } | null;
       assignedDesigner: PersonRecord | null;
       assignedEditor: PersonRecord | null;
+      media: Array<{
+        id: string;
+        url: string;
+        fileType: string;
+        sizeBytes: number;
+        createdAt: string;
+      }>;
     };
   };
 };
@@ -155,6 +162,7 @@ export function useContentDetail(id?: string) {
         assignedEditor: mapAssignment(content.assignedEditor),
         versions: mapVersions(versionsResponse.data.versions),
         comments: mapComments(commentsResponse.data.comments),
+        media: content.media ?? [],
       } satisfies ContentDetailData;
     },
   });

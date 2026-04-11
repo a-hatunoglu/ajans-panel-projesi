@@ -228,6 +228,12 @@ export async function restoreCompany(id: string, actor: ActorContext) {
 
   if (!company) throw new NotFoundError('Çöp kutusunda böyle bir şirket bulunamadı.');
 
+  // company.deletedAt aynı zamanda cascade-silinen child satırların
+  // deletedAt değeriyle eşleşir (softDeleteCompany aynı `now` yazar).
+  // Bağımsız silinen satırlar farklı timestamp taşır, bu yüzden
+  // sadece cascade-silinenleri geri yüklemek için timestamp eşleşmesi kullanılır.
+  const batchTimestamp = company.deletedAt;
+
   await prisma.$transaction(async (tx) => {
     await tx.company.update({
       where: { id },
@@ -235,12 +241,12 @@ export async function restoreCompany(id: string, actor: ActorContext) {
     });
 
     await tx.socialAccount.updateMany({
-      where: { companyId: id, deletedAt: { not: null } },
+      where: { companyId: id, deletedAt: batchTimestamp },
       data: { deletedAt: null },
     });
 
     await tx.content.updateMany({
-      where: { companyId: id, deletedAt: { not: null } },
+      where: { companyId: id, deletedAt: batchTimestamp },
       data: { deletedAt: null },
     });
   });

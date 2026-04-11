@@ -7,6 +7,7 @@ import * as z from "zod";
 import { apiClient } from "@/lib/api-client";
 import { Loader2 } from "lucide-react";
 import { useI18n } from "@/i18n/provider";
+import Link from "next/link";
 
 type LoginForm = {
   email: string;
@@ -84,7 +85,9 @@ export default function LoginPage() {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium text-zinc-300" htmlFor="password">{t("auth.login.password")}</label>
-            <button type="button" className="text-xs text-zinc-500 hover:text-zinc-300">{t("auth.login.forgotPassword")}</button>
+            <Link href="/forgot-password" className="text-sm font-medium text-primary hover:text-white transition-colors">
+              {t("auth.login.forgotPassword")}
+            </Link>
           </div>
           <input
             id="password"

@@ -19,7 +19,7 @@ export const globalRateLimiter = rateLimit({
 // Auth endpointleri için daha sıkı limit (Faz 2'de kullanılacak)
 export const authRateLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 dakika
-  max: 5,
+  max: env.RATE_LIMIT_AUTH_MAX,
   standardHeaders: true,
   legacyHeaders: false,
   message: {

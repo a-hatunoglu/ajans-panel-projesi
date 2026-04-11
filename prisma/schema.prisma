@@ -149,6 +149,7 @@ model Content {
   approvedBy       User?          @relation("ContentApprovedBy", fields: [approvedById], references: [id])
   versions         ContentVersion[]
   comments         ContentComment[]
+  media            ContentMedia[]
 
   @@index([companyId])
   @@index([socialAccountId])
@@ -259,4 +260,20 @@ model ActivityLog {
   @@index([companyId])
   @@index([resourceType, resourceId])
   @@map("activity_logs")
+}
+
+// ─── Faz 8: Media Storage ────────────────────────────────────
+
+model ContentMedia {
+  id        String   @id @default(uuid()) @db.Uuid
+  contentId String   @map("content_id") @db.Uuid
+  url       String
+  fileType  String   @db.VarChar(50)
+  sizeBytes Int
+  createdAt DateTime @default(now()) @map("created_at")
+
+  content   Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  
+  @@index([contentId])
+  @@map("content_media")
 }

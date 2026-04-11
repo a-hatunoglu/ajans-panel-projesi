@@ -18,6 +18,7 @@ import { ActorContext } from '../../shared/types/actor-context';
 import { logActivity } from '../activity-logs/activity-logs.service';
 import { ActivityAction } from '../../shared/constants/activity-actions';
 import { assertCompanyAccess } from '../../shared/helpers/access-control';
+import * as storageService from '../../shared/services/storage.service';
 
 // ─── Select Shapes ───────────────────────────────────────────
 
@@ -46,6 +47,7 @@ const CONTENT_DETAIL_SELECT = {
   assignedEditor: { select: { id: true, firstName: true, lastName: true, email: true } },
   createdBy: { select: { id: true, firstName: true, lastName: true, email: true } },
   approvedBy: { select: { id: true, firstName: true, lastName: true, email: true } },
+  media: { select: { id: true, url: true, fileType: true, sizeBytes: true, createdAt: true } },
   _count: { select: { versions: true, comments: true } },
 };
 
@@ -879,6 +881,73 @@ export async function addComment(
   });
 
   return comment;
+}
+
+// ─── Media Management ────────────────────────────────────────
+
+export async function addMedia(contentId: string, file: Express.Multer.File, actor: ActorContext) {
+  const content = await prisma.content.findUnique({
+    where: { id: contentId, deletedAt: null },
+    select: { companyId: true, status: true },
+  });
+  if (!content) throw new NotFoundError('İçerik bulunamadı.');
+
+  await assertCompanyAccess(content.companyId, actor);
+
+  const url = await storageService.uploadFile(file.buffer, file.originalname, file.mimetype);
+
+  const media = await prisma.contentMedia.create({
+    data: {
+      contentId,
+      url,
+      fileType: file.mimetype,
+      sizeBytes: file.size,
+    },
+  });
+
+  await logActivity(actor, {
+    action: ActivityAction.CONTENT_UPDATE,
+    companyId: content.companyId,
+    resourceType: 'content',
+    resourceId: contentId,
+    details: {
+      action: 'media_added',
+      mediaId: media.id,
+    },
+  });
+
+  return media;
+}
+
+export async function removeMedia(contentId: string, mediaId: string, actor: ActorContext) {
+  const content = await prisma.content.findUnique({
+    where: { id: contentId, deletedAt: null },
+    select: { companyId: true, status: true },
+  });
+  if (!content) throw new NotFoundError('İçerik bulunamadı.');
+
+  await assertCompanyAccess(content.companyId, actor);
+
+  const media = await prisma.contentMedia.findUnique({
+    where: { id: mediaId, contentId },
+  });
+  if (!media) throw new NotFoundError('Medya bulunamadı.');
+
+  await storageService.deleteFile(media.url);
+  await prisma.contentMedia.delete({ where: { id: mediaId } });
+
+  await logActivity(actor, {
+    action: ActivityAction.CONTENT_UPDATE,
+    companyId: content.companyId,
+    resourceType: 'content',
+    resourceId: contentId,
+    details: {
+      action: 'media_removed',
+      mediaId: media.id,
+    },
+  });
+
+  return media;
 }
 
 // ─── Calendar Query ──────────────────────────────────────────

@@ -16,7 +16,7 @@ async function globalSetup() {
     recursive: true,
   });
 
-  for (const role of ["owner", "admin", "editor", "client"] as const) {
+  for (const role of ["owner", "admin", "editor", "designer", "client"] as const) {
     const requestContext = await request.newContext();
 
     const response = await requestContext.post(`${API_BASE_URL}/auth/login`, {

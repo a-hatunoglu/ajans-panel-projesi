@@ -23,6 +23,14 @@ export type ContentAssignment = {
   email: string;
 };
 
+export type ContentMediaItem = {
+  id: string;
+  url: string;
+  fileType: string;
+  sizeBytes: number;
+  createdAt: string;
+};
+
 export type ContentListItemData = {
   id: string;
   title: string;

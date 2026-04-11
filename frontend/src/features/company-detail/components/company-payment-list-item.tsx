@@ -3,9 +3,13 @@
 import type { CompanyPaymentItem } from "../types";
 import { useFormatters } from "@/lib/formatters";
 import { useLabels } from "@/lib/labels";
+import { useI18n } from "@/i18n/provider";
+import { useChangePaymentStatus } from "@/features/payments/api/mutations";
+import { CheckCircle, Loader2 } from "lucide-react";
 
 interface CompanyPaymentListItemProps {
   item: CompanyPaymentItem;
+  canManage?: boolean;
 }
 
 function getStatusBadge(status: CompanyPaymentItem["status"], label: string) {
@@ -33,17 +37,27 @@ function getStatusBadge(status: CompanyPaymentItem["status"], label: string) {
 
 export function CompanyPaymentListItem({
   item,
+  canManage,
 }: CompanyPaymentListItemProps) {
+  const { t } = useI18n();
   const { getPaymentDisplayDateLabel, getPaymentStatusLabel } = useLabels();
   const { formatCurrencyAmount, formatPaymentPeriod, formatShortDate } =
     useFormatters();
+  const statusMutation = useChangePaymentStatus();
+
+  const handleMarkAsPaid = () => {
+    if (statusMutation.isPending) return;
+    statusMutation.mutate({ paymentId: item.id, status: "paid" });
+  };
+
   const statusLabel = getPaymentStatusLabel(item.status);
   const displayDateAt =
     item.status === "paid" && item.paidAt ? item.paidAt : item.dueDate;
   const periodLabel = formatPaymentPeriod(item.periodStart, item.periodEnd);
+  const showMarkAsPaid = canManage && item.status !== "paid";
 
   return (
-    <div className="flex w-full flex-col justify-between gap-4 p-4 text-left transition-colors hover:bg-zinc-900/40 sm:flex-row sm:items-center">
+    <div className="group flex w-full flex-col justify-between gap-4 p-4 text-left transition-colors hover:bg-zinc-900/40 sm:flex-row sm:items-center">
       <div className="min-w-0 flex-1">
         <div className="text-sm font-medium tabular-nums text-zinc-100">
           {formatCurrencyAmount(item.amount, item.currency)}
@@ -65,8 +79,23 @@ export function CompanyPaymentListItem({
           </span>
         </div>
 
-        <div className="flex w-24 shrink-0 justify-end">
+        <div className="flex flex-1 shrink-0 items-center justify-end gap-3 text-right">
           {getStatusBadge(item.status, statusLabel)}
+          {showMarkAsPaid && (
+            <button
+              type="button"
+              onClick={handleMarkAsPaid}
+              disabled={statusMutation.isPending}
+              className="inline-flex items-center gap-1 text-xs font-medium text-zinc-500 hover:text-emerald-400 transition-colors disabled:opacity-50 opacity-0 group-hover:opacity-100"
+            >
+              {statusMutation.isPending ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <CheckCircle className="w-3.5 h-3.5" />
+              )}
+              {t("payments.markAsPaid")}
+            </button>
+          )}
         </div>
       </div>
     </div>

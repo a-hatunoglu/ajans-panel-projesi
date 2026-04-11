@@ -50,6 +50,7 @@ export default defineConfig({
         CLIENT_URL: appBaseUrl,
         CORS_ORIGINS: appBaseUrl,
         RATE_LIMIT_MAX: "5000",
+        RATE_LIMIT_AUTH_MAX: "200",
       },
       url: `${apiBaseUrl}/health`,
       reuseExistingServer: false,

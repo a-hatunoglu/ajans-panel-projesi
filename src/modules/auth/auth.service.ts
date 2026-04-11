@@ -5,6 +5,7 @@ import {
   generateRandomToken,
   hashToken,
   REFRESH_TOKEN_TTL_MS,
+  RESET_TOKEN_TTL_MS,
 } from '../../shared/utils/token';
 import { UserRole } from '../../shared/types/enums';
 import {
@@ -13,7 +14,8 @@ import {
   ConflictError,
   NotFoundError,
 } from '../../shared/errors/app-error';
-import { RegisterInput, LoginInput, AcceptInviteInput, ResetPasswordInput } from './auth.schema';
+import { RegisterInput, LoginInput, AcceptInviteInput, ResetPasswordInput, ForgotPasswordInput } from './auth.schema';
+import { sendResetEmail } from '../../shared/services/mailer';
 import { logActivity } from '../activity-logs/activity-logs.service';
 import { ActivityAction } from '../../shared/constants/activity-actions';
 
@@ -267,4 +269,35 @@ export async function resetPassword(data: ResetPasswordInput) {
   await prisma.refreshToken.deleteMany({ where: { userId: user.id } });
 
   return { message: 'Şifre başarıyla sıfırlandı.' };
+}
+
+// ─── Forgot Password (Self-Service) ──────────────────────────
+
+export async function forgotPassword(data: ForgotPasswordInput) {
+  const user = await prisma.user.findFirst({
+    where: { email: data.email, deletedAt: null },
+  });
+
+  // Enumeration protection: always return the same generic message.
+  const responseMessage = { message: 'Eğer bu e-posta adresi kayıtlıysa, şifre sıfırlama linki gönderildi.' };
+
+  // Only proceed if user exists and is active.
+  if (!user || !user.isActive) {
+    return responseMessage;
+  }
+
+  const rawToken = generateRandomToken();
+  const tokenHash = hashToken(rawToken);
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      resetToken: tokenHash,
+      resetExpiresAt: new Date(Date.now() + RESET_TOKEN_TTL_MS),
+    },
+  });
+
+  await sendResetEmail(user.email, user.firstName, rawToken);
+
+  return responseMessage;
 }

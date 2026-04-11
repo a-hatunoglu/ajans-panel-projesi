@@ -103,15 +103,17 @@ All environment variables are validated at startup via Zod (`src/config/index.ts
 | `CORS_ORIGINS` | `http://localhost:5173` | Comma-separated list of allowed CORS origins. In production, should include the frontend origin. |
 | `RATE_LIMIT_WINDOW_MS` | `60000` | Rate limiting window in milliseconds. |
 | `RATE_LIMIT_MAX` | `100` | Max requests per rate limit window. |
+| `STORAGE_S3_ACCESS_KEY` | | S3/MinIO compatible access key for file uploads. Hard fails in production if missing. |
+| `STORAGE_S3_SECRET` | | S3/MinIO compatible secret. |
+| `STORAGE_S3_REGION` | | S3/MinIO region. |
+| `STORAGE_S3_BUCKET` | | Target bucket name. |
+| `STORAGE_S3_ENDPOINT` | | Optional for non-AWS (e.g. MinIO, R2, DigitalOcean). |
 
-### Reserved (in `.env.example` but not yet wired into the backend)
+### Reserved (in `.env.example` but not yet fully wired)
 
-The following variables appear in `.env.example` and `docker-compose.yml` but are **not currently read by the backend config schema or referenced in code**. They are placeholders for planned features:
+The following variables appear in `.env.example` and `docker-compose.yml` but are **not currently actively utilized for full production delivery rules**:
 
-- `S3_ENDPOINT`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_BUCKET`, `S3_REGION` — File storage (MinIO/S3)
-- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM` — Email delivery
-
-Setting them has no effect on the backend today. They will be wired when file upload and email features are implemented.
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM` — Email delivery. Currently in a fail-closed/best-effort implementation layer.
 
 ## Health check
 

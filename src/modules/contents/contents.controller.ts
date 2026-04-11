@@ -167,6 +167,35 @@ export async function addComment(req: Request, res: Response, next: NextFunction
   }
 }
 
+export async function addMedia(req: Request, res: Response, next: NextFunction) {
+  try {
+    if (!req.file) {
+      throw new Error('Dosya bulunamadı.');
+    }
+    const media = await contentsService.addMedia(
+      req.params.id as string,
+      req.file,
+      getActor(req)
+    );
+    res.status(201).json({ success: true, data: { media } });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function removeMedia(req: Request, res: Response, next: NextFunction) {
+  try {
+    const media = await contentsService.removeMedia(
+      req.params.id as string,
+      req.params.mediaId as string,
+      getActor(req)
+    );
+    res.json({ success: true, data: { media } });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function getCalendar(req: Request, res: Response, next: NextFunction) {
   try {
     const query = { ...req.query };

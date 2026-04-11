@@ -1,4 +1,6 @@
 import { Router } from 'express';
+import multer from 'multer';
+import path from 'path';
 import { validate } from '../../middleware/validate';
 import { authenticate } from '../../middleware/authenticate';
 import { authorize } from '../../middleware/authorize';
@@ -17,6 +19,36 @@ import {
   contentsListQuerySchema,
 } from './contents.schema';
 import * as contentsController from './contents.controller';
+
+const ALLOWED_MIME_MAP: Record<string, string[]> = {
+  'image/jpeg': ['.jpg', '.jpeg'],
+  'image/png': ['.png'],
+  'image/webp': ['.webp'],
+  'image/gif': ['.gif'],
+  'video/mp4': ['.mp4'],
+  'video/webm': ['.webm'],
+};
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const allowedExts = ALLOWED_MIME_MAP[file.mimetype];
+
+    if (!allowedExts) {
+      cb(new Error('Desteklenmeyen MIME tipi. Lütfen geçerli bir görsel veya video yükleyin.'));
+      return;
+    }
+
+    if (!allowedExts.includes(ext)) {
+      cb(new Error(`Dosya uzantısı (${ext}) MIME tipiyle (${file.mimetype}) uyuşmuyor.`));
+      return;
+    }
+
+    cb(null, true);
+  },
+});
 
 // Company-scoped routes (/companies/:companyId/contents)
 
@@ -122,6 +154,21 @@ directRouter.post(
   '/:id/comments',
   validate({ params: contentIdParamSchema, body: addCommentSchema }),
   contentsController.addComment,
+);
+
+directRouter.post(
+  '/:id/media',
+  authorize(UserRole.OWNER, UserRole.ADMIN, UserRole.EDITOR, UserRole.DESIGNER),
+  validate({ params: contentIdParamSchema }),
+  upload.single('file'),
+  contentsController.addMedia,
+);
+
+directRouter.delete(
+  '/:id/media/:mediaId',
+  authorize(UserRole.OWNER, UserRole.ADMIN, UserRole.EDITOR, UserRole.DESIGNER),
+  validate({ params: contentIdParamSchema }),
+  contentsController.removeMedia,
 );
 
 export { companyRouter as contentCompanyRoutes, directRouter as contentDirectRoutes };

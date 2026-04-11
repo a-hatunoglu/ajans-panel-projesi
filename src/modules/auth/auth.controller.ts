@@ -122,3 +122,12 @@ export async function resetPassword(req: Request, res: Response, next: NextFunct
     next(err);
   }
 }
+
+export async function forgotPassword(req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await authService.forgotPassword(req.body);
+    res.json({ success: true, data: result });
+  } catch (err) {
+    next(err);
+  }
+}

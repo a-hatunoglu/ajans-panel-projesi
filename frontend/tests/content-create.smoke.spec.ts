@@ -64,7 +64,7 @@ test("designer can create a draft with locked self-assignment", async ({
     session.page.getByRole("heading", { name: "Draft Setup" }),
   ).toBeVisible();
   await expect(session.page.locator("#assignedDesignerId")).toHaveCount(0);
-  await expect(session.page.getByText("Deniz Designer")).toBeVisible();
+  await expect(session.page.getByRole("main").getByText("Deniz Designer")).toBeVisible();
   await expect(
     session.page.getByText("Your role assigns the designer field to you."),
   ).toBeVisible();

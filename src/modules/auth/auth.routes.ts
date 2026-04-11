@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { validate } from '../../middleware/validate';
 import { authRateLimiter } from '../../middleware/rate-limit';
-import { registerSchema, loginSchema, acceptInviteSchema, resetPasswordSchema } from './auth.schema';
+import { registerSchema, loginSchema, acceptInviteSchema, resetPasswordSchema, forgotPasswordSchema } from './auth.schema';
 import * as authController from './auth.controller';
 
 const router = Router();
@@ -40,6 +40,14 @@ router.post(
   '/reset-password',
   validate({ body: resetPasswordSchema }),
   authController.resetPassword,
+);
+
+// POST /auth/forgot-password - Sifremi unuttum istegi (public, rate limited)
+router.post(
+  '/forgot-password',
+  authRateLimiter,
+  validate({ body: forgotPasswordSchema }),
+  authController.forgotPassword,
 );
 
 export { router as authRoutes };

@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X, Loader2, UserPlus, Copy, Check } from "lucide-react";
+import { X, Loader2, UserPlus, Check } from "lucide-react";
 import { useI18n } from "@/i18n/provider";
 import {
   useInvitePlatformUserMutation,
@@ -15,7 +15,7 @@ interface InvitePlatformUserDialogProps {
   companyId: string;
   open: boolean;
   onClose: () => void;
-  onSuccessReturn: () => void; // Called after full success + token copied/dismissed
+  onSuccessReturn: () => void; // Called after full success + dismissed
 }
 
 export function InvitePlatformUserDialog({
@@ -59,36 +59,22 @@ export function InvitePlatformUserDialog({
   const attachMutation = useAddCompanyUserMutation(companyId);
 
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [successToken, setSuccessToken] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const isPending = inviteMutation.isPending || attachMutation.isPending;
 
   const handleClose = () => {
     if (isPending) return;
     setSubmitError(null);
-    setSuccessToken(null);
-    setCopied(false);
+    setShowSuccess(false);
     reset();
     onClose();
   };
 
   const handleSuccessClose = () => {
-    setSuccessToken(null);
-    setCopied(false);
+    setShowSuccess(false);
     reset();
     onSuccessReturn();
-  };
-
-  const copyToClipboard = async () => {
-    if (!successToken) return;
-    try {
-      await navigator.clipboard.writeText(successToken);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error("Failed to copy:", err);
-    }
   };
 
   const onSubmit = async (data: InviteFormValues) => {
@@ -97,13 +83,12 @@ export function InvitePlatformUserDialog({
       // 1. Invite User
       const inviteRes = await inviteMutation.mutateAsync(data);
       const newUserId = inviteRes.user.id;
-      const token = inviteRes.inviteToken;
 
       // 2. Attach User
       await attachMutation.mutateAsync({ userId: newUserId });
 
-      // 3. Show Success & Token
-      setSuccessToken(token);
+      // 3. Show Success
+      setShowSuccess(true);
     } catch (err) {
       const message =
         err instanceof Error
@@ -123,8 +108,8 @@ export function InvitePlatformUserDialog({
       />
 
       <div className="relative w-full max-w-md mx-4 bg-zinc-950 border border-white/10 rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
-        {successToken ? (
-          // --- SUCCESS STATE (Token Display) ---
+        {showSuccess ? (
+          // --- SUCCESS STATE (Clean confirmation) ---
           <div className="p-8 text-center flex flex-col items-center">
             <div className="h-12 w-12 rounded-full bg-green-500/10 text-green-500 flex items-center justify-center mb-4 border border-green-500/20">
               <Check className="w-6 h-6" />
@@ -133,41 +118,16 @@ export function InvitePlatformUserDialog({
               {t("companyDetail.users.invite.success.title")}
             </h2>
             <p className="text-sm text-zinc-400 mb-6 max-w-[280px]">
-              {t("companyDetail.users.invite.success.description")}
+              {t("companyDetail.users.invite.success.descriptionNoToken")}
             </p>
 
-            <div className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-4 mb-6">
-              <code className="text-zinc-200 text-sm break-all font-mono select-all">
-                {successToken}
-              </code>
-            </div>
-
-            <div className="flex gap-3 w-full">
-              <button
-                type="button"
-                onClick={copyToClipboard}
-                className="flex-1 h-10 flex items-center justify-center gap-2 rounded-md bg-zinc-800 text-zinc-200 text-sm font-medium hover:bg-zinc-700 transition-colors border border-white/5"
-              >
-                {copied ? (
-                  <>
-                    <Check className="w-4 h-4 text-green-400" />
-                    {t("companyDetail.users.invite.success.copied")}
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-4 h-4" />
-                    {t("companyDetail.users.invite.success.copy")}
-                  </>
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={handleSuccessClose}
-                className="flex-1 h-10 flex items-center justify-center gap-2 rounded-md bg-white text-black text-sm font-medium hover:bg-zinc-200 transition-colors"
-              >
-                {t("companyDetail.users.invite.success.close")}
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={handleSuccessClose}
+              className="w-full h-10 flex items-center justify-center gap-2 rounded-md bg-white text-black text-sm font-medium hover:bg-zinc-200 transition-colors"
+            >
+              {t("companyDetail.users.invite.success.close")}
+            </button>
           </div>
         ) : (
           // --- FORM STATE ---
