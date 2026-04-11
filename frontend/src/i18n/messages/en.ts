@@ -41,7 +41,7 @@ export const enMessages = {
   },
   dashboard: {
     pageTitle: "Overview",
-    pageSubtitle: "Read-only summary of attention load, upcoming schedule, and active companies.",
+    pageSubtitle: "Operational summary of attention load, upcoming schedule, and active companies.",
     loadingTitle: "Loading overview",
     loadingDescription: "Dashboard data is being loaded from the backend.",
     errorTitle: "Could not load overview",
@@ -589,7 +589,7 @@ export const enMessages = {
   },
   notifications: {
     pageTitle: "Notifications",
-    pageSubtitle: "Read-only stream of approvals, workflow changes, and system alerts.",
+    pageSubtitle: "Approvals, workflow changes, and system alerts.",
     unreadCount: "{count} unread",
     emptyState: "You have no notifications.",
     emptyFilteredState: "No notifications matched the current filter.",

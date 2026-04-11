@@ -98,22 +98,22 @@ All environment variables are validated at startup via Zod (`src/config/index.ts
 | `API_PREFIX` | `/api/v1` | Base path for all API routes. |
 | `JWT_ACCESS_EXPIRES_IN` | `15m` | Access token lifetime (e.g. `15m`, `1h`). |
 | `JWT_REFRESH_EXPIRES_IN` | `7d` | Refresh token lifetime (e.g. `7d`, `30d`). |
-| `APP_URL` | `http://localhost:3000` | Backend's own URL. Reserved for email templates and link generation. |
-| `CLIENT_URL` | `http://localhost:5173` | Frontend URL. Reserved for email templates, invite links, password reset links. |
+| `APP_URL` | `http://localhost:3000` | Backend's own URL. Used in email templates and link generation. |
+| `CLIENT_URL` | `http://localhost:5173` | Frontend URL. Used in email templates, invite links, password reset links. |
 | `CORS_ORIGINS` | `http://localhost:5173` | Comma-separated list of allowed CORS origins. In production, should include the frontend origin. |
 | `RATE_LIMIT_WINDOW_MS` | `60000` | Rate limiting window in milliseconds. |
 | `RATE_LIMIT_MAX` | `100` | Max requests per rate limit window. |
+| `RATE_LIMIT_AUTH_MAX` | `5` | Max auth requests (login, forgot-password) per rate limit window. |
 | `STORAGE_S3_ACCESS_KEY` | | S3/MinIO compatible access key for file uploads. Hard fails in production if missing. |
 | `STORAGE_S3_SECRET` | | S3/MinIO compatible secret. |
 | `STORAGE_S3_REGION` | | S3/MinIO region. |
 | `STORAGE_S3_BUCKET` | | Target bucket name. |
 | `STORAGE_S3_ENDPOINT` | | Optional for non-AWS (e.g. MinIO, R2, DigitalOcean). |
-
-### Reserved (in `.env.example` but not yet fully wired)
-
-The following variables appear in `.env.example` and `docker-compose.yml` but are **not currently actively utilized for full production delivery rules**:
-
-- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM` — Email delivery. Currently in a fail-closed/best-effort implementation layer.
+| `SMTP_HOST` | | SMTP server hostname. In production, the server exits at boot if not configured. In development, email delivery is skipped with a console warning. |
+| `SMTP_PORT` | `465` | SMTP port. |
+| `SMTP_USER` | | SMTP authentication username. |
+| `SMTP_PASS` | | SMTP authentication password. |
+| `EMAIL_FROM` | `noreply@agencyos.app` | Sender address for outgoing emails (invites, password resets). |
 
 ## Health check
 

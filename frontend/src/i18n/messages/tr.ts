@@ -590,7 +590,7 @@ export const trMessages: typeof enMessages = {
   },
   notifications: {
     pageTitle: "Bildirimler",
-    pageSubtitle: "Onayların, iş akışı değişikliklerinin ve sistem uyarılarının salt okunur akışı.",
+    pageSubtitle: "Onaylar, iş akışı değişiklikleri ve sistem uyarıları.",
     unreadCount: "{count} okunmamış",
     emptyState: "Bildiriminiz yok.",
     emptyFilteredState: "Mevcut filtreyle eşleşen bildirim bulunamadı.",
