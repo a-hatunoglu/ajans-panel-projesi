@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { Command } from "lucide-react";
 import { useI18n } from "@/i18n/provider";
 
@@ -33,9 +35,9 @@ export function MarketingFooter() {
           <div className="flex flex-col gap-4">
             <h4 className="text-sm font-semibold text-white tracking-tight">{t("marketing.footer.legal")}</h4>
             <div className="flex flex-col gap-3 text-sm text-zinc-500">
-              <span className="text-zinc-600 cursor-default">{t("marketing.footer.privacyPolicy")}</span>
-              <span className="text-zinc-600 cursor-default">{t("marketing.footer.termsOfService")}</span>
-              <span className="text-zinc-600 cursor-default">{t("marketing.footer.cookiePolicy")}</span>
+              <Link href="/privacy" className="hover:text-zinc-300 transition-colors">{t("marketing.footer.privacyPolicy")}</Link>
+              <Link href="/terms" className="hover:text-zinc-300 transition-colors">{t("marketing.footer.termsOfService")}</Link>
+              <Link href="/cookies" className="hover:text-zinc-300 transition-colors">{t("marketing.footer.cookiePolicy")}</Link>
             </div>
           </div>
         </div>

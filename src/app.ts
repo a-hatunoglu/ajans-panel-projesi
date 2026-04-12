@@ -24,6 +24,10 @@ const app = express();
 
 // ─── Global Middleware ───────────────────────────────────────
 
+// Trust the first proxy (Render, Vercel, etc.) so X-Forwarded-For
+// is used for req.ip. Required for express-rate-limit behind a reverse proxy.
+app.set('trust proxy', 1);
+
 // Güvenlik başlıkları
 app.use(helmet());
 

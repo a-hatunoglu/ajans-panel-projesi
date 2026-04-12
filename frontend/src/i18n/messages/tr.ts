@@ -820,7 +820,7 @@ export const trMessages: typeof enMessages = {
       privacyPolicy: "Gizlilik Politikası",
       termsOfService: "Kullanım Şartları",
       cookiePolicy: "Çerez Politikası",
-      copyright: "© {year} AgencyOS Inc. Tüm hakları saklıdır.",
+      copyright: "© {year} AgencyOS. Tüm hakları saklıdır.",
     },
   },
   settings: {
@@ -944,6 +944,21 @@ export const trMessages: typeof enMessages = {
       approved: "Planlamaya hazır",
       scheduled: "Yayın sırasına alındı",
       published: "Yayında",
+    },
+  },
+  legal: {
+    backToHome: "Ana Sayfaya Dön",
+    privacyPolicy: {
+      title: "Gizlilik Politikası",
+      description: "Gizlilik politikamız şu anda hazırlanmaktadır. Tam belge için lütfen daha sonra tekrar kontrol edin.",
+    },
+    termsOfService: {
+      title: "Kullanım Şartları",
+      description: "Kullanım şartlarımız şu anda hazırlanmaktadır. Tam belge için lütfen daha sonra tekrar kontrol edin.",
+    },
+    cookiePolicy: {
+      title: "Çerez Politikası",
+      description: "Çerez politikamız şu anda hazırlanmaktadır. Tam belge için lütfen daha sonra tekrar kontrol edin.",
     },
   },
 };

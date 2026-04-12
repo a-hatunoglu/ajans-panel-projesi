@@ -819,7 +819,7 @@ export const enMessages = {
       privacyPolicy: "Privacy Policy",
       termsOfService: "Terms of Service",
       cookiePolicy: "Cookie Policy",
-      copyright: "© {year} AgencyOS Inc. All rights reserved.",
+      copyright: "© {year} AgencyOS. All rights reserved.",
     },
   },
   settings: {
@@ -943,6 +943,21 @@ export const enMessages = {
       approved: "Ready to schedule",
       scheduled: "Queued for publish",
       published: "Already published",
+    },
+  },
+  legal: {
+    backToHome: "Back to Home",
+    privacyPolicy: {
+      title: "Privacy Policy",
+      description: "Our privacy policy is currently being prepared. Please check back soon for the full document.",
+    },
+    termsOfService: {
+      title: "Terms of Service",
+      description: "Our terms of service are currently being prepared. Please check back soon for the full document.",
+    },
+    cookiePolicy: {
+      title: "Cookie Policy",
+      description: "Our cookie policy is currently being prepared. Please check back soon for the full document.",
     },
   },
 };
