@@ -24,6 +24,7 @@ import { useI18n } from "@/i18n/provider";
 interface ContentCreateFormProps {
   companies: ContentCreateCompanyOption[];
   currentUser: CreateCurrentUser;
+  defaultCompanyId?: string;
 }
 
 function FieldError({ message }: { message?: string }) {
@@ -76,6 +77,7 @@ function getBlockingMessage(
 export function ContentCreateForm({
   companies,
   currentUser,
+  defaultCompanyId,
 }: ContentCreateFormProps) {
   const router = useRouter();
   const { t } = useI18n();
@@ -137,9 +139,12 @@ export function ContentCreateForm({
     const currentCompanyId = getValues("companyId");
 
     if (!currentCompanyId) {
-      setValue("companyId", companies[0].id, { shouldValidate: true });
+      const preferred = defaultCompanyId && companies.some((c) => c.id === defaultCompanyId)
+        ? defaultCompanyId
+        : companies[0].id;
+      setValue("companyId", preferred, { shouldValidate: true });
     }
-  }, [companies, getValues, setValue]);
+  }, [companies, defaultCompanyId, getValues, setValue]);
 
   useEffect(() => {
     if (!selectedCompanyId) {

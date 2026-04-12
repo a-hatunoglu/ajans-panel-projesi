@@ -158,7 +158,8 @@ export const enMessages = {
     },
     contents: {
       title: "Company Content Stream",
-      description: "Read-only view of this company's operational content pipeline.",
+      description: "This company's operational content pipeline.",
+      createContent: "Create Content",
       loading: "Company contents are being loaded from the backend.",
       error: "Company contents could not be loaded right now.",
       empty: "No content records were found for this company yet.",
@@ -254,10 +255,11 @@ export const enMessages = {
     },
     calendar: {
       title: "Company Calendar Flow",
-      description: "Read-only weekly view of this company's scheduled and published content rhythm.",
+      description: "Weekly view of this company's scheduled and published content rhythm.",
       loading: "Company calendar items are being loaded from the backend.",
       error: "Company calendar items could not be loaded right now.",
       emptyWeek: "No scheduled or published content falls into this week.",
+      createContentHint: "Get started by creating new content.",
       previousWeek: "Previous week",
       nextWeek: "Next week",
     },

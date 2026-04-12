@@ -124,6 +124,13 @@ export async function createCompany(data: CreateCompanyInput, actor: ActorContex
     resourceId: company.id,
   });
 
+  await prisma.companyUser.create({
+    data: {
+      companyId: company.id,
+      userId: actor.userId,
+    },
+  });
+
   return company;
 }
 

@@ -8,10 +8,13 @@ import { ContentCreateForm } from "@/features/content-create/components/content-
 import { useI18n } from "@/i18n/provider";
 import { useAuth } from "@/providers/auth-provider";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 export default function ContentCreatePage() {
   const { t } = useI18n();
   const { user, isLoading: isAuthLoading } = useAuth();
+  const searchParams = useSearchParams();
+  const defaultCompanyId = searchParams.get("company") || undefined;
   const role = user?.role || "guest";
   const canCreate = ["owner", "admin", "editor", "designer"].includes(role);
   const companiesQuery = useCreateCompanyOptions(canCreate && !isAuthLoading);
@@ -95,6 +98,7 @@ export default function ContentCreatePage() {
       <ContentCreateForm
         companies={companies}
         currentUser={{ id: user.id, role: role as "owner" | "admin" | "editor" | "designer" | "client" }}
+        defaultCompanyId={defaultCompanyId}
       />
     </PageContainer>
   );

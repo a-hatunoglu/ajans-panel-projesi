@@ -18,6 +18,9 @@ if (smtpConfigured) {
       user: env.SMTP_USER!,
       pass: env.SMTP_PASS!,
     },
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 15_000,
   });
   console.log('✅ SMTP mailer initialized.');
 } else if (isProduction) {

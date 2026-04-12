@@ -53,14 +53,15 @@ export function CompanyHeader({ company }: { company: CompanyDetailData }) {
 
       <div className="grid gap-3 self-start rounded-lg border border-white/5 bg-zinc-900/40 p-4 text-sm sm:grid-cols-3 sm:self-center">
         {contactItems.map((item) => (
-          <div key={item.label} className="flex min-w-[150px] flex-col gap-1">
+          <div key={item.label} className="flex min-w-0 flex-col gap-1">
             <span className="text-xs font-medium text-zinc-500">{item.label}</span>
             {item.href ? (
               <a
                 href={item.href}
                 target={item.label === t("companyDetail.header.website") ? "_blank" : undefined}
                 rel={item.label === t("companyDetail.header.website") ? "noreferrer" : undefined}
-                className="break-all text-zinc-200 transition hover:text-white"
+                className="truncate text-zinc-200 transition hover:text-white"
+                title={item.value || undefined}
               >
                 {item.value}
               </a>

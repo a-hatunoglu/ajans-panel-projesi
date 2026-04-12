@@ -159,7 +159,8 @@ export const trMessages: typeof enMessages = {
     },
     contents: {
       title: "Şirket İçerik Akışı",
-      description: "Bu şirketin operasyonel içerik hattının salt okunur görünümü.",
+      description: "Bu şirketin operasyonel içerik hattı.",
+      createContent: "İçerik Oluştur",
       loading: "Şirket içerikleri backend üzerinden yükleniyor.",
       error: "Şirket içerikleri şu anda yüklenemedi.",
       empty: "Bu şirket için henüz içerik kaydı bulunamadı.",
@@ -255,10 +256,11 @@ export const trMessages: typeof enMessages = {
     },
     calendar: {
       title: "Şirket Takvim Akışı",
-      description: "Bu şirketin planlanan ve yayınlanan içerik ritminin salt okunur haftalık görünümü.",
+      description: "Bu şirketin planlanan ve yayınlanan içerik ritminin haftalık görünümü.",
       loading: "Şirket takvim öğeleri backend üzerinden yükleniyor.",
       error: "Şirket takvim öğeleri şu anda yüklenemedi.",
       emptyWeek: "Bu hafta için planlanan veya yayınlanan içerik bulunmuyor.",
+      createContentHint: "Yeni bir içerik oluşturarak başlayın.",
       previousWeek: "Önceki hafta",
       nextWeek: "Sonraki hafta",
     },

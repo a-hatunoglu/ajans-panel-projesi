@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { addWeeks, startOfWeek } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCompanyCalendarWeek } from "../../api/queries";
@@ -93,9 +94,19 @@ export function CompanyCalendarTab({ companyId }: CompanyCalendarTabProps) {
       {!isLoading && !isError && days.length > 0 && (
         <div className="space-y-3">
           {isWeekEmpty && (
-            <CompanyInlineStatePanel
-              message={t("companyDetail.calendar.emptyWeek")}
-            />
+            <div className="space-y-2">
+              <CompanyInlineStatePanel
+                message={t("companyDetail.calendar.emptyWeek")}
+              />
+              <p className="px-4 text-sm text-zinc-500">
+                <Link
+                  href={`/app/contents/new?company=${companyId}`}
+                  className="text-zinc-400 underline underline-offset-2 transition-colors hover:text-zinc-200"
+                >
+                  {t("companyDetail.calendar.createContentHint")}
+                </Link>
+              </p>
+            </div>
           )}
 
           <CompanyCalendarDayRail days={days} />
