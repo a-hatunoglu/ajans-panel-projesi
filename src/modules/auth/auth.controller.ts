@@ -8,7 +8,7 @@ import {
 } from '../../shared/utils/token';
 import * as authService from './auth.service';
 
-const BASE_COOKIE_OPTIONS: Pick<CookieOptions, 'httpOnly' | 'secure' | 'sameSite'> = {
+const BASE_COOKIE_OPTIONS: CookieOptions = {
   httpOnly: true,
   secure: env.NODE_ENV === 'production',
   sameSite: env.NODE_ENV === 'production' ? 'none' : 'lax',
