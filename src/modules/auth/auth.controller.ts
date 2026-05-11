@@ -11,7 +11,7 @@ import * as authService from './auth.service';
 const BASE_COOKIE_OPTIONS: Pick<CookieOptions, 'httpOnly' | 'secure' | 'sameSite'> = {
   httpOnly: true,
   secure: env.NODE_ENV === 'production',
-  sameSite: 'strict' as const,
+  sameSite: env.NODE_ENV === 'production' ? 'none' : 'lax',
 };
 
 const ACCESS_COOKIE_OPTIONS: CookieOptions = {
