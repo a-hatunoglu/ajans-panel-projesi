@@ -28,7 +28,6 @@ import { AddAgencyUserDialog } from "@/features/platform/components/add-agency-u
 export default function AgencyDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { updateUser } = useAuth();
   const agencyId = params.id as string;
   const { data: agency, isLoading } = useAgencyDetail(agencyId);
   const updateMutation = useUpdateAgencyMutation(agencyId);

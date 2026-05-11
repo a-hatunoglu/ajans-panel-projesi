@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useAuth } from "@/providers/auth-provider"
-import { canManageCompanies } from "@/lib/roles";;
+import { canManageCompanies } from "@/lib/roles";
 import { useCompanyPayments, useCompanyDetail } from "../../api/queries";
 import { CompanyInlineStatePanel } from "../company-inline-state-panel";
 import { CompanyPaymentListItem } from "../company-payment-list-item";
@@ -23,7 +23,6 @@ interface CompanyPaymentsTabProps {
 export function CompanyPaymentsTab({ companyId }: CompanyPaymentsTabProps) {
   const { t } = useI18n();
   const { user } = useAuth();
-  const role = user?.role || "guest";
   const canManage = canManageCompanies(user?.role, user?.agencyRole ?? undefined);
 
   const [page, setPage] = useState(1);

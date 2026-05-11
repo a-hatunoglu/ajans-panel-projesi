@@ -79,7 +79,6 @@ export function CreateAgencyDialog({ open, onClose }: CreateAgencyDialogProps) {
   }, [isPending, reset, onClose]);
 
   // Auto-generate slug from name
-  const nameValue = watch("name");
   const autoSlug = useCallback(
     (name: string) => {
       const slug = name

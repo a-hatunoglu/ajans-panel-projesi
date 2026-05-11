@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo } from "react";
 import { Plus, Users, UserCog, Loader2 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useAuth } from "@/providers/auth-provider"
-import { canManageCompanies } from "@/lib/roles";;
+import { canManageCompanies } from "@/lib/roles";
 import { useCompanyUsers } from "../../api/queries";
 import { useRemoveCompanyUserMutation } from "../../api/mutations";
 import { CompanyInlineStatePanel } from "../company-inline-state-panel";

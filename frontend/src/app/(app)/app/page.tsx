@@ -2,7 +2,7 @@
 
 import { PageStatePanel } from "@/components/shared/page-state-panel";
 import { useAuth } from "@/providers/auth-provider"
-import { canManageCompanies, isPlatformOwner } from "@/lib/roles";;
+import { canManageCompanies, isPlatformOwner } from "@/lib/roles";
 import { PageContainer } from "@/components/shared/page-container";
 import { useDashboardData } from "@/features/dashboard/api/queries";
 import { useDashboardLayout } from "@/features/dashboard/hooks/use-dashboard-layout";

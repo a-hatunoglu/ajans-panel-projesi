@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { SearchX, Building2, FileText, Plus, X, CheckSquare } from "lucide-react";
 import { useAuth } from "@/providers/auth-provider"
-import { canManageCompanies } from "@/lib/roles";;
+import { canManageCompanies } from "@/lib/roles";
 import { PageContainer } from "@/components/shared/page-container";
 import { PageStatePanel } from "@/components/shared/page-state-panel";
 import { ContentsToolbar } from "@/features/contents/components/contents-toolbar";
@@ -22,7 +22,6 @@ const PER_PAGE = 20;
 export default function ContentsPage() {
   const { t } = useI18n();
   const { user } = useAuth();
-  const role = user?.role || "guest";
   // member is included because member+editor/designer need to create.
   // member+client will see the button but backend enforces company-level role checks.
   const canCreate = true /* all authenticated users */;

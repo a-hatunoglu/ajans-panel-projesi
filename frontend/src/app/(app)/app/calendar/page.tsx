@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { addWeeks, startOfWeek } from "date-fns";
 import { useAuth } from "@/providers/auth-provider"
-import { canManageCompanies } from "@/lib/roles";;
+import { canManageCompanies } from "@/lib/roles";
 import { PageContainer } from "@/components/shared/page-container";
 import { PageStatePanel } from "@/components/shared/page-state-panel";
 import { CalendarToolbar } from "@/features/calendar/components/calendar-toolbar";
