@@ -45,7 +45,6 @@ export function CreateAgencyDialog({ open, onClose }: CreateAgencyDialogProps) {
     register,
     handleSubmit,
     reset,
-    watch,
     setValue,
     formState: { errors, isValid },
   } = useForm<FormValues>({

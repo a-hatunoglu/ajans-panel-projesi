@@ -21,7 +21,6 @@ import {
   useDeleteAgencyMutation,
   useRestoreAgencyMutation,
 } from "@/features/platform/api/mutations";
-import { useAuth } from "@/providers/auth-provider";
 import { useState } from "react";
 import { AddAgencyUserDialog } from "@/features/platform/components/add-agency-user-dialog";
 
