@@ -88,8 +88,8 @@ test("owner activity page shows seeded activity logs", async ({
 
   // At least one seeded actor name should be visible in the activity list
   await expect(
-    session.page.getByText("Enes Owner").or(
-      session.page.getByText("Ece Editor"),
+    session.page.getByText("Enes Koç").or(
+      session.page.getByText("Ece Aydın"),
     ).first(),
   ).toBeVisible();
 

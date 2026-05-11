@@ -60,7 +60,7 @@ export function CompanyCalendarTab({ companyId }: CompanyCalendarTabProps) {
               onClick={() => setWeekStart((current) => addWeeks(current, -1))}
               aria-label={t("companyDetail.calendar.previousWeek")}
               title={t("companyDetail.calendar.previousWeek")}
-              className="p-1.5 text-zinc-400 transition-colors hover:text-white"
+              className="p-2.5 text-zinc-400 transition-colors hover:text-white"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
@@ -69,7 +69,7 @@ export function CompanyCalendarTab({ companyId }: CompanyCalendarTabProps) {
               onClick={() => setWeekStart((current) => addWeeks(current, 1))}
               aria-label={t("companyDetail.calendar.nextWeek")}
               title={t("companyDetail.calendar.nextWeek")}
-              className="p-1.5 text-zinc-400 transition-colors hover:text-white"
+              className="p-2.5 text-zinc-400 transition-colors hover:text-white"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
@@ -92,9 +92,9 @@ export function CompanyCalendarTab({ companyId }: CompanyCalendarTabProps) {
       )}
 
       {!isLoading && !isError && days.length > 0 && (
-        <div className="space-y-3">
+        <div className="flex flex-col gap-3">
           {isWeekEmpty && (
-            <div className="space-y-2">
+            <div className="flex flex-col gap-2">
               <CompanyInlineStatePanel
                 message={t("companyDetail.calendar.emptyWeek")}
               />

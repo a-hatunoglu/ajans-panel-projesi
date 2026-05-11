@@ -73,7 +73,7 @@ export function ContentWorkflowSidebar({
     <div className="flex flex-col gap-6">
       <section className="rounded-xl border border-white/5 bg-zinc-950 p-5">
         <h3 className="mb-4 text-sm font-medium text-zinc-200">{t("contentDetail.workflow.title")}</h3>
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
           <AssignmentRow label={t("contentDetail.workflow.designer")} value={data.assignedDesigner} unassignedLabel={uiCopy.unassigned} />
           <AssignmentRow label={t("contentDetail.workflow.editor")} value={data.assignedEditor} unassignedLabel={uiCopy.unassigned} />
           <div className="flex flex-col gap-1">

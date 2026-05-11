@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { PageStatePanel } from "@/components/shared/page-state-panel";
 import { RestrictedAccessPanel } from "@/components/shared/restricted-access-panel";
-import { useAuth } from "@/providers/auth-provider";
+import { useAuth } from "@/providers/auth-provider"
+import { canManageCompanies } from "@/lib/roles";;
 import { PageContainer } from "@/components/shared/page-container";
 import { ActivityListItem } from "@/features/activity/components/activity-list-item";
 import { ActivityFilters } from "@/features/activity/components/activity-filters";
@@ -22,7 +23,7 @@ export default function ActivityPage() {
   const { t } = useI18n();
   const { user, isLoading: isAuthLoading } = useAuth();
   const role = user?.role || "guest";
-  const canView = ["owner", "admin"].includes(role);
+  const canView = canManageCompanies(user?.role, user?.agencyRole ?? undefined);
   const [action, setAction] = useState<ActivityActionFilter | "all">("all");
   const [resourceType, setResourceType] = useState<ActivityResourceTypeFilter | "all">("all");
   const [page, setPage] = useState(1);

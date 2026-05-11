@@ -132,7 +132,7 @@ export function CreateSocialAccountDialog({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="px-6 py-5 space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 px-6 py-5">
           {submitError && (
             <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-md text-sm text-red-500 font-medium">
               {submitError}
@@ -140,7 +140,7 @@ export function CreateSocialAccountDialog({
           )}
 
           {/* Platform (required) */}
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-1.5">
             <label
               htmlFor="social-platform"
               className="text-xs font-medium text-zinc-300"
@@ -171,7 +171,7 @@ export function CreateSocialAccountDialog({
           </div>
 
           {/* Account Name (required) */}
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-1.5">
             <label
               htmlFor="social-account-name"
               className="text-xs font-medium text-zinc-300"
@@ -195,7 +195,7 @@ export function CreateSocialAccountDialog({
           </div>
 
           {/* Profile URL */}
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-1.5">
             <label
               htmlFor="social-profile-url"
               className="text-xs font-medium text-zinc-300"

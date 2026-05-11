@@ -1,13 +1,14 @@
 import { z } from 'zod';
 import { UserRole } from '../../shared/types/enums';
 
-const validRoles = [UserRole.ADMIN, UserRole.EDITOR, UserRole.DESIGNER, UserRole.CLIENT] as const;
+const validRoles = [UserRole.PLATFORM_OWNER, UserRole.USER] as const;
 
 export const inviteUserSchema = z.object({
   email: z.string().email('Geçerli bir e-posta adresi giriniz.'),
   firstName: z.string().min(1, 'Ad zorunludur.').max(100),
   lastName: z.string().min(1, 'Soyad zorunludur.').max(100),
-  role: z.enum(validRoles, { errorMap: () => ({ message: 'Geçerli bir rol seçiniz (admin, editor, designer, client).' }) }),
+  role: z.enum(validRoles, { errorMap: () => ({ message: 'Geçerli bir rol seçiniz (platform_owner, user).' }) }).optional().default(UserRole.USER),
+  tempPassword: z.string().min(6, 'Geçici şifre en az 6 karakter olmalıdır.').optional(),
 });
 
 export const updateMeSchema = z.object({
@@ -26,6 +27,7 @@ export const updateUserSchema = z.object({
   lastName: z.string().min(1).max(100).optional(),
   avatarUrl: z.string().url().nullable().optional(),
   role: z.enum(validRoles).optional(),
+  isActive: z.boolean().optional(),
 });
 
 export const userIdParamSchema = z.object({

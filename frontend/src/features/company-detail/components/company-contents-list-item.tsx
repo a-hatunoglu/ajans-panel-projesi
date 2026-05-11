@@ -8,27 +8,12 @@ import { useUiCopy } from "@/lib/copy";
 import { useLabels } from "@/lib/labels";
 import { useFormatters } from "@/lib/formatters";
 import { useI18n } from "@/i18n/provider";
+import { ContentStatusBadge } from "@/components/shared/content-status-badge";
 
 interface CompanyContentsListItemProps {
   content: CompanyContentsItem;
 }
 
-function getStatusBadge(status: CompanyContentsItem["status"], label: string) {
-  switch (status) {
-    case "draft":
-      return <span className="rounded-full border border-zinc-500/20 bg-zinc-500/10 px-2 py-0.5 text-[10px] font-medium text-zinc-400">{label}</span>;
-    case "in_review":
-      return <span className="rounded-full border border-blue-500/20 bg-blue-500/10 px-2 py-0.5 text-[10px] font-medium text-blue-400">{label}</span>;
-    case "revise":
-      return <span className="rounded-full border border-orange-500/20 bg-orange-500/10 px-2 py-0.5 text-[10px] font-medium text-orange-400">{label}</span>;
-    case "approved":
-      return <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-400">{label}</span>;
-    case "scheduled":
-      return <span className="rounded-full border border-purple-500/20 bg-purple-500/10 px-2 py-0.5 text-[10px] font-medium text-purple-400">{label}</span>;
-    case "published":
-      return <span className="rounded-full border border-zinc-700/50 bg-zinc-800 px-2 py-0.5 text-[10px] font-medium text-zinc-500">{label}</span>;
-  }
-}
 
 function getAssignmentLabel(assignment: ContentAssignment | null, unassignedLabel: string) {
   if (!assignment) {
@@ -121,7 +106,7 @@ export function CompanyContentsListItem({
 
       <div className="mt-2 flex w-full shrink-0 items-center justify-between gap-4 sm:mt-0 sm:w-auto sm:justify-start sm:gap-6">
         <div className="w-24 shrink-0">
-          {getStatusBadge(content.status, statusLabel)}
+          <ContentStatusBadge status={content.status} label={statusLabel} />
         </div>
 
         <div className="hidden w-44 flex-col gap-1 md:flex">

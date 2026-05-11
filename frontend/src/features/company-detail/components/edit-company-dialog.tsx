@@ -152,7 +152,7 @@ export function EditCompanyDialog({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="px-6 py-5 space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 px-6 py-5">
           {submitError && (
             <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-md text-sm text-red-500 font-medium">
               {submitError}
@@ -160,7 +160,7 @@ export function EditCompanyDialog({
           )}
 
           {/* Name (required) */}
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-1.5">
             <label
               htmlFor="edit-company-name"
               className="text-xs font-medium text-zinc-300"
@@ -183,7 +183,7 @@ export function EditCompanyDialog({
 
           {/* Email + Phone */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
+            <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="edit-company-email"
                 className="text-xs font-medium text-zinc-300"
@@ -204,7 +204,7 @@ export function EditCompanyDialog({
               )}
             </div>
 
-            <div className="space-y-1.5">
+            <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="edit-company-phone"
                 className="text-xs font-medium text-zinc-300"
@@ -222,7 +222,7 @@ export function EditCompanyDialog({
           </div>
 
           {/* Website */}
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-1.5">
             <label
               htmlFor="edit-company-website"
               className="text-xs font-medium text-zinc-300"
@@ -245,7 +245,7 @@ export function EditCompanyDialog({
           </div>
 
           {/* Address */}
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-1.5">
             <label
               htmlFor="edit-company-address"
               className="text-xs font-medium text-zinc-300"
@@ -262,7 +262,7 @@ export function EditCompanyDialog({
           </div>
 
           {/* Notes */}
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-1.5">
             <label
               htmlFor="edit-company-notes"
               className="text-xs font-medium text-zinc-300"

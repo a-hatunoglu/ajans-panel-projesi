@@ -9,31 +9,18 @@ import {
   SendHorizontal,
   CalendarDays,
   Upload,
+  Undo2,
 } from "lucide-react";
 import Link from "next/link";
 import { useUiCopy } from "@/lib/copy";
 import { useLabels } from "@/lib/labels";
 import { useI18n } from "@/i18n/provider";
+import { ContentStatusBadge } from "@/components/shared/content-status-badge";
 
 const actionButtonBaseClass =
-  "flex h-10 w-full items-center justify-center gap-2 rounded-md px-3 text-sm font-medium transition-colors sm:h-9 sm:w-auto";
+  "flex h-11 w-full items-center justify-center gap-2 rounded-md px-3 text-sm font-medium transition-colors sm:h-9 sm:w-auto";
 
-function getStatusBadge(status: ContentDetailData["status"], label: string) {
-  switch (status) {
-    case "draft":
-      return <span className="px-2.5 py-1 text-xs font-medium rounded-full border bg-zinc-500/10 text-zinc-400 border-zinc-500/20">{label}</span>;
-    case "in_review":
-      return <span className="px-2.5 py-1 text-xs font-medium rounded-full border bg-blue-500/10 text-blue-400 border-blue-500/20">{label}</span>;
-    case "revise":
-      return <span className="px-2.5 py-1 text-xs font-medium rounded-full border bg-orange-500/10 text-orange-400 border-orange-500/20">{label}</span>;
-    case "approved":
-      return <span className="px-2.5 py-1 text-xs font-medium rounded-full border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">{label}</span>;
-    case "scheduled":
-      return <span className="px-2.5 py-1 text-xs font-medium rounded-full border bg-purple-500/10 text-purple-400 border-purple-500/20">{label}</span>;
-    case "published":
-      return <span className="px-2.5 py-1 text-xs font-medium rounded-full border bg-zinc-800 text-zinc-500 border-zinc-700/50">{label}</span>;
-  }
-}
+
 
 interface ContentHeaderProps {
   data: ContentDetailData;
@@ -43,10 +30,12 @@ interface ContentHeaderProps {
   canEdit: boolean;
   canSchedule: boolean;
   canPublish: boolean;
+  canUnschedule: boolean;
   isWorking: boolean;
   onSubmitForReview: () => void;
   onApprove: () => void;
   onRequestRevision: () => void;
+  onUnschedule: () => void;
 }
 
 export function ContentHeader({
@@ -57,10 +46,12 @@ export function ContentHeader({
   canEdit,
   canSchedule,
   canPublish,
+  canUnschedule,
   isWorking,
   onSubmitForReview,
   onApprove,
   onRequestRevision,
+  onUnschedule,
 }: ContentHeaderProps) {
   const { t } = useI18n();
   const uiCopy = useUiCopy();
@@ -97,7 +88,7 @@ export function ContentHeader({
           <h1 className="basis-full text-2xl font-semibold tracking-tight text-white sm:basis-auto">
             {data.title}
           </h1>
-          {getStatusBadge(data.status, statusLabel)}
+          <ContentStatusBadge status={data.status} label={statusLabel} size="md" />
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap lg:justify-end">
@@ -129,6 +120,18 @@ export function ContentHeader({
               <Upload className="h-4 w-4" />
               {t("contentDetail.header.publishContent")}
             </Link>
+          )}
+
+          {canUnschedule && (
+            <button
+              type="button"
+              onClick={onUnschedule}
+              disabled={isWorking}
+              className={`${actionButtonBaseClass} border border-zinc-700 bg-zinc-900/50 text-zinc-300 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-70`}
+            >
+              <Undo2 className="h-4 w-4" />
+              {t("contentDetail.header.unscheduleContent")}
+            </button>
           )}
 
           {canRequestRevision && (

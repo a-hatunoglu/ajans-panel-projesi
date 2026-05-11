@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import type { Platform } from "@/features/contents/types";
+import { settingsKeys } from "@/features/settings/api/keys";
 
 // ─── Create Social Account ──────────────────────────────────
 
@@ -49,6 +50,7 @@ export function useCreateSocialAccountMutation(companyId: string) {
 
 export type AddCompanyUserPayload = {
   userId: string;
+  roles?: string[];
 };
 
 type AddCompanyUserResponse = {
@@ -103,7 +105,7 @@ type SystemUsersResponse = {
 
 export function useSystemUsers(enabled: boolean) {
   return useQuery({
-    queryKey: ["system-users"],
+    queryKey: settingsKeys.systemUsers,
     enabled,
     queryFn: async () => {
       const response = await apiClient<SystemUsersResponse>("/users", {
@@ -130,7 +132,7 @@ type InviteUserPayload = {
   email: string;
   firstName: string;
   lastName: string;
-  role: "admin" | "editor" | "designer" | "client";
+  role: "platform_owner" | "user";
 };
 
 type InviteUserResponse = {
@@ -153,7 +155,7 @@ export function useInvitePlatformUserMutation() {
     },
     onSuccess: () => {
       // Refresh the system users list so the newly invited user becomes available
-      queryClient.invalidateQueries({ queryKey: ["system-users"] });
+      queryClient.invalidateQueries({ queryKey: settingsKeys.systemUsers });
     },
   });
 }
@@ -195,7 +197,7 @@ export function useUpdateCompanyMutation(companyId: string) {
 export type UpdateUserPayload = {
   firstName?: string;
   lastName?: string;
-  role?: "admin" | "editor" | "designer" | "client";
+  role?: "platform_owner" | "user";
 };
 
 export function useUpdateUserMutation(companyId: string) {
@@ -216,8 +218,54 @@ export function useUpdateUserMutation(companyId: string) {
         queryClient.invalidateQueries({
           queryKey: ["company-users", companyId],
         }),
-        queryClient.invalidateQueries({ queryKey: ["system-users"] }),
+        queryClient.invalidateQueries({ queryKey: settingsKeys.systemUsers }),
       ]);
+    },
+  });
+}
+
+// ─── Update Company User Roles ───────────────────────────────
+
+export type UpdateCompanyUserRolesPayload = {
+  roles: string[];
+};
+
+export function useUpdateCompanyUserRolesMutation(companyId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      roles,
+    }: UpdateCompanyUserRolesPayload & { userId: string }) => {
+      return apiClient(`/companies/${companyId}/users/${userId}/roles`, {
+        method: "PUT",
+        body: JSON.stringify({ roles }),
+      });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["company-users", companyId],
+      });
+    },
+  });
+}
+
+// ─── Remove Company User ────────────────────────────────────
+
+export function useRemoveCompanyUserMutation(companyId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      return apiClient(`/companies/${companyId}/users/${userId}`, {
+        method: "DELETE",
+      });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["company-users", companyId],
+      });
     },
   });
 }

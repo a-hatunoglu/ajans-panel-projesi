@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Settings, LogOut, Bell } from "lucide-react";
+import { Settings, LogOut, Bell, Search } from "lucide-react";
 import Link from "next/link";
 import { MobileAppNav } from "@/components/shared/mobile-app-nav";
 import { LocaleSwitcher } from "@/components/shared/locale-switcher";
@@ -18,7 +18,7 @@ function NotificationBell() {
   return (
     <Link
       href="/app/notifications"
-      className="relative flex h-9 w-9 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-white/5 hover:text-zinc-200 shrink-0"
+      className="relative flex h-11 w-11 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-white/5 hover:text-zinc-200 shrink-0"
       aria-label={t("topbar.notifications")}
     >
       <Bell className="h-4 w-4" />
@@ -45,15 +45,29 @@ export function Topbar() {
       user?.email ||
       t("common.guest");
 
-  const roleKey = user?.role as
-    | "owner"
-    | "admin"
-    | "editor"
-    | "designer"
-    | "client"
-    | undefined;
-  const roleLabel = roleKey
-    ? t(`labels.userRole.${roleKey}`)
+  // Determine the most relevant role label to display.
+  // Owner/Admin → show global role. Members → show their highest company role.
+  const COMPANY_ROLE_PRIORITY: Record<string, number> = {
+    editor: 3,
+    designer: 2,
+    client: 1,
+  };
+
+  const resolvedRoleKey = (() => {
+    if (!user?.role) return undefined;
+    if (user.role === "platform_owner") return "owner";
+    if (user.agencyRole === "agency_admin") return "admin";
+    // For members, find highest company role
+    const companyRoles = user.companyRoles ?? [];
+    if (companyRoles.length === 0) return "member";
+    const sorted = [...companyRoles].sort(
+      (a, b) => (COMPANY_ROLE_PRIORITY[b] ?? 0) - (COMPANY_ROLE_PRIORITY[a] ?? 0)
+    );
+    return sorted[0];
+  })() as "owner" | "admin" | "editor" | "designer" | "client" | "member" | undefined;
+
+  const roleLabel = resolvedRoleKey
+    ? t(`labels.userRole.${resolvedRoleKey}`)
     : null;
 
   const close = useCallback(() => setIsOpen(false), []);
@@ -93,7 +107,36 @@ export function Topbar() {
     await logout();
   };
 
+  // Check impersonation state
+  const activeAgencyName =
+    typeof window !== "undefined"
+      ? localStorage.getItem("agencyos-active-agency-name")
+      : null;
+  const isImpersonating =
+    user?.role === "platform_owner" && !!activeAgencyName;
+
+  const handleExitAgency = () => {
+    localStorage.removeItem("agencyos-active-agency-id");
+    localStorage.removeItem("agencyos-active-agency-name");
+    window.location.href = "/app/platform";
+  };
+
   return (
+    <>
+      {isImpersonating && (
+        <div className="sticky top-0 z-50 flex items-center justify-between gap-3 bg-blue-600/10 border-b border-blue-500/20 px-4 py-1.5 sm:px-6">
+          <p className="text-xs text-blue-400">
+            <span className="font-medium">{activeAgencyName}</span> ajansını
+            görüntülüyorsun
+          </p>
+          <button
+            onClick={handleExitAgency}
+            className="text-xs text-blue-400 hover:text-blue-300 font-medium transition-colors"
+          >
+            ← Platforma Dön
+          </button>
+        </div>
+      )}
     <header className="sticky top-0 z-40 border-b border-white/5 bg-zinc-950/80 px-4 backdrop-blur sm:px-6">
       <div className="flex h-16 items-center justify-between gap-3">
         <div className="lg:hidden">
@@ -102,6 +145,20 @@ export function Topbar() {
 
         <div className="ml-auto flex min-w-0 items-center gap-3 sm:gap-4">
           <NotificationBell />
+
+          {/* Command Palette trigger — desktop only */}
+          <button
+            type="button"
+            onClick={() => {
+              document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true, bubbles: true }));
+            }}
+            className="hidden md:inline-flex items-center gap-2 h-9 rounded-lg border border-white/5 bg-zinc-900/50 px-3 text-sm text-zinc-500 transition-colors hover:border-white/10 hover:text-zinc-300"
+          >
+            <Search className="h-3.5 w-3.5" />
+            <span className="hidden lg:inline">{t("commandPalette.placeholder")}</span>
+            <kbd className="ml-1 inline-flex h-5 items-center rounded border border-white/10 bg-zinc-900 px-1.5 text-[10px] font-medium text-zinc-600">⌘K</kbd>
+          </button>
+
           <LocaleSwitcher className="shrink-0" />
 
           {/* Account trigger */}
@@ -172,7 +229,7 @@ export function Topbar() {
                     href="/app/settings"
                     onClick={close}
                     role="menuitem"
-                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-zinc-400 transition-colors hover:bg-white/5 hover:text-zinc-100"
+                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-zinc-400 transition-colors hover:bg-white/5 hover:text-zinc-100"
                   >
                     <Settings className="h-4 w-4" />
                     {t("topbar.settings")}
@@ -183,7 +240,7 @@ export function Topbar() {
                     role="menuitem"
                     onClick={handleSignOut}
                     disabled={isLoggingOut}
-                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-zinc-400 transition-colors hover:bg-white/5 hover:text-zinc-100 disabled:opacity-50 disabled:cursor-wait"
+                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-zinc-400 transition-colors hover:bg-white/5 hover:text-zinc-100 disabled:opacity-50 disabled:cursor-wait"
                   >
                     <LogOut className="h-4 w-4" />
                     {isLoggingOut
@@ -197,5 +254,6 @@ export function Topbar() {
         </div>
       </div>
     </header>
+    </>
   );
 }

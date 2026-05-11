@@ -30,6 +30,15 @@ export async function getCompany(req: Request, res: Response, next: NextFunction
   }
 }
 
+export async function getCompanyAnalytics(req: Request, res: Response, next: NextFunction) {
+  try {
+    const analytics = await companiesService.getCompanyAnalytics(req.params.id as string, getActor(req));
+    res.json({ success: true, data: analytics });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function updateCompany(req: Request, res: Response, next: NextFunction) {
   try {
     const company = await companiesService.updateCompany(req.params.id as string, req.body, getActor(req));
@@ -68,7 +77,7 @@ export async function permanentDeleteCompany(req: Request, res: Response, next: 
 
 export async function listTrash(req: Request, res: Response, next: NextFunction) {
   try {
-    const result = await companiesService.listTrash(req.query);
+    const result = await companiesService.listTrash(getActor(req), req.query);
     res.json({ success: true, data: result.companies, meta: result.meta });
   } catch (err) {
     next(err);
@@ -92,7 +101,8 @@ export async function addCompanyUser(req: Request, res: Response, next: NextFunc
     const member = await companiesService.addUserToCompany(
       req.params.id as string,
       req.body.userId,
-      getActor(req)
+      getActor(req),
+      req.body.roles || []
     );
     res.status(201).json({ success: true, data: { member } });
   } catch (err) {
@@ -108,6 +118,20 @@ export async function removeCompanyUser(req: Request, res: Response, next: NextF
       getActor(req)
     );
     res.json({ success: true, data: result });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function updateCompanyUserRoles(req: Request, res: Response, next: NextFunction) {
+  try {
+    const member = await companiesService.updateCompanyUserRoles(
+      req.params.id as string,
+      req.params.userId as string,
+      req.body.roles || [],
+      getActor(req)
+    );
+    res.json({ success: true, data: { member } });
   } catch (err) {
     next(err);
   }

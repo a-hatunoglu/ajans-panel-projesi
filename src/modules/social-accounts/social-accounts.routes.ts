@@ -2,8 +2,9 @@ import { Router } from 'express';
 import { validate } from '../../middleware/validate';
 import { authenticate } from '../../middleware/authenticate';
 import { authorize } from '../../middleware/authorize';
+import { agencyScope } from '../../middleware/agency-scope';
 import { companyAccess } from '../../middleware/company-access';
-import { UserRole } from '../../shared/types/enums';
+import { UserRole, AgencyRole } from '../../shared/types/enums';
 import {
   createSocialAccountSchema,
   updateSocialAccountSchema,
@@ -16,6 +17,7 @@ import * as socialAccountsController from './social-accounts.controller';
 
 const companyRouter = Router({ mergeParams: true });
 companyRouter.use(authenticate);
+companyRouter.use(agencyScope());
 
 // GET /companies/:id/social-accounts — Şirketin hesaplarını listele
 companyRouter.get(
@@ -28,7 +30,6 @@ companyRouter.get(
 // POST /companies/:id/social-accounts — Yeni hesap ekle
 companyRouter.post(
   '/',
-  authorize(UserRole.OWNER, UserRole.ADMIN, UserRole.EDITOR),
   validate({ params: companyIdParamSchema, body: createSocialAccountSchema }),
   companyAccess(),
   socialAccountsController.create,
@@ -38,6 +39,7 @@ companyRouter.post(
 
 const directRouter = Router();
 directRouter.use(authenticate);
+directRouter.use(agencyScope());
 
 // GET /social-accounts/:id — Hesap detay
 directRouter.get(
@@ -49,7 +51,6 @@ directRouter.get(
 // PUT /social-accounts/:id — Hesap güncelle
 directRouter.put(
   '/:id',
-  authorize(UserRole.OWNER, UserRole.ADMIN, UserRole.EDITOR),
   validate({ params: socialAccountIdParamSchema, body: updateSocialAccountSchema }),
   socialAccountsController.update,
 );
@@ -57,7 +58,7 @@ directRouter.put(
 // DELETE /social-accounts/:id — Soft delete
 directRouter.delete(
   '/:id',
-  authorize(UserRole.OWNER, UserRole.ADMIN),
+  authorize(UserRole.PLATFORM_OWNER, AgencyRole.AGENCY_ADMIN),
   validate({ params: socialAccountIdParamSchema }),
   socialAccountsController.softDelete,
 );

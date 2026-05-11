@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ContentStatus } from '../../shared/types/enums';
+import { ALLOWED_MIME_TYPES } from '../../shared/constants/media';
 
 const statusValues = [
   ContentStatus.DRAFT,
@@ -22,6 +23,7 @@ export const createContentSchema = z.object({
   assignedEditorId: z.string().uuid('Geçersiz editor ID.'),
   title: z.string().min(1, 'Başlık zorunludur.').max(500),
   body: z.string().nullable().optional(),
+  scheduledAt: z.coerce.date().optional(),
 });
 
 export const updateContentSchema = z.object({
@@ -58,6 +60,31 @@ export const addCommentSchema = z.object({
 export const contentIdParamSchema = z.object({
   id: z.string().uuid('Geçersiz içerik ID.'),
 });
+
+export const presignedUrlSchema = z.object({
+  filename: z.string().min(1, 'Dosya adı zorunludur.'),
+  mimetype: z.string().min(1, 'MIME tipi zorunludur.').refine(
+    (val) => ALLOWED_MIME_TYPES.includes(val),
+    { message: 'Desteklenmeyen MIME tipi.' },
+  ),
+});
+
+export const confirmMediaSchema = z.object({
+  url: z.string().url('Geçerli bir URL giriniz.').refine(
+    (val) => {
+      try {
+        const parsed = new URL(val);
+        return ['http:', 'https:'].includes(parsed.protocol);
+      } catch {
+        return false;
+      }
+    },
+    { message: 'Sadece http veya https protokolü kabul edilir.' },
+  ),
+  fileType: z.string().min(1),
+  sizeBytes: z.number().min(1),
+});
+
 
 export const companyIdParamSchema = z.object({
   companyId: z.string().uuid('Geçersiz şirket ID.'),

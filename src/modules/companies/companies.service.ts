@@ -1,6 +1,6 @@
 import { prisma } from '../../config/database';
 import { UserRole } from '../../shared/types/enums';
-import { NotFoundError, ConflictError } from '../../shared/errors/app-error';
+import { NotFoundError, ConflictError, ForbiddenError, AppError } from '../../shared/errors/app-error';
 import { generateSlug } from '../../shared/utils/slug';
 import { parsePagination, createPaginationMeta, PaginationQuery } from '../../shared/utils/pagination';
 import { CreateCompanyInput, UpdateCompanyInput } from './companies.schema';
@@ -27,6 +27,12 @@ const COMPANY_SELECT = {
 const COMPANY_USER_SELECT = {
   id: true,
   createdAt: true,
+  roles: {
+    select: {
+      role: true,
+      createdAt: true,
+    },
+  },
   user: {
     select: {
       id: true,
@@ -73,14 +79,23 @@ async function createUniqueSlug(name: string, excludeId?: string): Promise<strin
 export async function listCompanies(actor: ActorContext, query: PaginationQuery) {
   const pagination = parsePagination(query);
 
-  const isAdmin = actor.role === UserRole.OWNER || actor.role === UserRole.ADMIN;
+  const isPlatformOwner = actor.role === UserRole.PLATFORM_OWNER;
+  const isAgencyAdmin = actor.agencyRole === 'agency_admin';
 
-  const where = isAdmin
-    ? { deletedAt: null }
-    : {
-        deletedAt: null,
-        companyUsers: { some: { userId: actor.userId } },
-      };
+  // Base where: not deleted
+  const where: Record<string, unknown> = { deletedAt: null };
+
+  if (!isPlatformOwner) {
+    // Scope to actor's agency
+    if (actor.agencyId) {
+      where.agencyId = actor.agencyId;
+    }
+
+    // Non-admin agency members: only their companies
+    if (!isAgencyAdmin) {
+      where.companyUsers = { some: { userId: actor.userId } };
+    }
+  }
 
   const [companies, total] = await Promise.all([
     prisma.company.findMany({
@@ -102,12 +117,18 @@ export async function listCompanies(actor: ActorContext, query: PaginationQuery)
 // ─── Create Company ──────────────────────────────────────────
 
 export async function createCompany(data: CreateCompanyInput, actor: ActorContext) {
+  // Agency scoping: company must belong to actor's agency
+  if (!actor.agencyId) {
+    throw new ForbiddenError('Şirket oluşturmak için bir ajansa bağlı olmalısınız.');
+  }
+
   const slug = await createUniqueSlug(data.name);
 
   const company = await prisma.company.create({
     data: {
       name: data.name,
       slug,
+      agencyId: actor.agencyId,
       website: data.website ?? null,
       phone: data.phone ?? null,
       email: data.email ?? null,
@@ -128,6 +149,12 @@ export async function createCompany(data: CreateCompanyInput, actor: ActorContex
     data: {
       companyId: company.id,
       userId: actor.userId,
+      roles: {
+        create: [
+          { role: 'editor', assignedById: actor.userId },
+          { role: 'designer', assignedById: actor.userId },
+        ],
+      },
     },
   });
 
@@ -147,6 +174,26 @@ export async function getCompany(id: string) {
 
   if (!company) throw new NotFoundError('Şirket bulunamadı.');
   return company;
+}
+
+// ─── Company Analytics ───────────────────────────────────────
+
+export async function getCompanyAnalytics(companyId: string, actor: ActorContext) {
+  await assertCompanyAccess(companyId, actor);
+
+  const [totalContents, pendingApprovals, scheduledContents, activeSocialAccounts] = await Promise.all([
+    prisma.content.count({ where: { companyId, deletedAt: null } }),
+    prisma.content.count({ where: { companyId, deletedAt: null, status: { in: ['in_review', 'revise'] } } }),
+    prisma.content.count({ where: { companyId, deletedAt: null, status: 'scheduled' } }),
+    prisma.socialAccount.count({ where: { companyId, deletedAt: null, isActive: true } }),
+  ]);
+
+  return {
+    totalContents,
+    pendingApprovals,
+    scheduledContents,
+    activeSocialAccounts,
+  };
 }
 
 // ─── Update Company ──────────────────────────────────────────
@@ -281,10 +328,9 @@ export async function permanentDeleteCompany(id: string, actor: ActorContext) {
     );
   }
 
-  // TODO [Faz 6]: Şirkete ait S3/MinIO dosyaları (logolar, içerik görselleri vb.)
-  // kalıcı silme öncesi temizlenmelidir. Dosya path'leri social_accounts ve
-  // content_versions tablolarından toplanıp S3'ten silinmelidir.
-  // Örnek: await storageService.deleteCompanyFiles(id);
+  // KNOWN_LIMITATION [v1]: S3/MinIO dosya temizliği hard-delete sırasında yapılmıyor.
+  // Şirkete ait content media ve logo dosyaları storage'da kalır.
+  // v2'de storageService.deleteCompanyFiles(id) implement edilecek.
 
   // Cascade: Prisma schema'da onDelete: Cascade olduğu için
   // company_users kayıtları da otomatik silinir.
@@ -302,10 +348,15 @@ export async function permanentDeleteCompany(id: string, actor: ActorContext) {
 
 // ─── List Trash ──────────────────────────────────────────────
 
-export async function listTrash(query: PaginationQuery) {
+export async function listTrash(actor: ActorContext, query: PaginationQuery) {
   const pagination = parsePagination(query);
 
-  const where = { deletedAt: { not: null } };
+  const where: Record<string, unknown> = { deletedAt: { not: null } };
+
+  // Scope to agency unless platform owner
+  if (actor.role !== UserRole.PLATFORM_OWNER && actor.agencyId) {
+    where.agencyId = actor.agencyId;
+  }
 
   const [companies, total] = await Promise.all([
     prisma.company.findMany({
@@ -338,7 +389,10 @@ export async function listCompanyUsers(
     orderBy: { createdAt: 'asc' },
   });
 
-  return members;
+  return members.map((member) => ({
+    ...member,
+    roles: member.roles.map((r) => r.role), // map relation array to string array
+  }));
 }
 
 // ─── Add User to Company ─────────────────────────────────────
@@ -347,6 +401,7 @@ export async function addUserToCompany(
   companyId: string,
   userId: string,
   actor: ActorContext,
+  operationalRoles: string[],
 ) {
   await assertCompanyAccess(companyId, actor);
 
@@ -360,20 +415,100 @@ export async function addUserToCompany(
   });
   if (existing) throw new ConflictError('Kullanıcı zaten bu şirkete ekli.');
 
+  if (!operationalRoles || operationalRoles.length === 0) {
+    throw new AppError('Kullanıcı eklenirken operasyonel roller (operationalRoles) belirtilmelidir.', 400, 'MISSING_ROLES');
+  }
+
   const membership = await prisma.companyUser.create({
-    data: { companyId, userId },
+    data: { 
+      companyId, 
+      userId,
+      roles: {
+        create: operationalRoles.map(role => ({ role, assignedById: actor.userId }))
+      }
+    },
     select: COMPANY_USER_SELECT,
   });
+
+  const formattedMembership = {
+    ...membership,
+    roles: membership.roles.map(r => r.role),
+  };
 
   await logActivity(actor, {
     action: ActivityAction.COMPANY_USER_ADD,
     companyId,
     resourceType: 'company_user',
     resourceId: membership.id,
-    details: { userId },
+    details: { userId, roles: operationalRoles },
   });
 
-  return membership;
+  return formattedMembership;
+}
+
+// ─── Update Company User Roles ────────────────────────────────
+
+export async function updateCompanyUserRoles(
+  companyId: string,
+  userId: string,
+  roles: string[],
+  actor: ActorContext,
+) {
+  await assertCompanyAccess(companyId, actor);
+
+  const existing = await prisma.companyUser.findUnique({
+    where: { companyId_userId: { companyId, userId } },
+    include: { roles: true },
+  });
+  if (!existing) throw new NotFoundError('Kullanıcı bu şirkette bulunamadı.');
+
+  const existingRoles = existing.roles.map(r => r.role);
+  const rolesToAdd = roles.filter(r => !existingRoles.includes(r));
+  const rolesToRemove = existingRoles.filter(r => !roles.includes(r));
+
+  if (rolesToAdd.length > 0 || rolesToRemove.length > 0) {
+    await prisma.$transaction([
+      ...(rolesToRemove.length > 0
+        ? [
+            prisma.companyUserRole.deleteMany({
+              where: {
+                companyUserId: existing.id,
+                role: { in: rolesToRemove },
+              },
+            }),
+          ]
+        : []),
+      ...(rolesToAdd.length > 0
+        ? [
+            prisma.companyUserRole.createMany({
+              data: rolesToAdd.map(role => ({
+                companyUserId: existing.id,
+                role,
+                assignedById: actor.userId,
+              })),
+            }),
+          ]
+        : []),
+    ]);
+
+    await logActivity(actor, {
+      action: ActivityAction.COMPANY_USER_UPDATE,
+      companyId,
+      resourceType: 'company_user',
+      resourceId: existing.id,
+      details: { userId, added: rolesToAdd, removed: rolesToRemove },
+    });
+  }
+
+  const updated = await prisma.companyUser.findUnique({
+    where: { id: existing.id },
+    select: COMPANY_USER_SELECT,
+  });
+
+  return {
+    ...updated,
+    roles: updated!.roles.map(r => r.role),
+  };
 }
 
 // ─── Remove User from Company ────────────────────────────────

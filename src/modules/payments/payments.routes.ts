@@ -2,7 +2,9 @@ import { Router } from 'express';
 import { validate } from '../../middleware/validate';
 import { authenticate } from '../../middleware/authenticate';
 import { authorize } from '../../middleware/authorize';
-import { UserRole } from '../../shared/types/enums';
+import { agencyScope } from '../../middleware/agency-scope';
+import { companyAccess } from '../../middleware/company-access';
+import { UserRole, AgencyRole } from '../../shared/types/enums';
 import * as paymentsController from './payments.controller';
 import { 
   paymentCompanyIdParamSchema, 
@@ -16,6 +18,8 @@ import {
 // 1. Company scope routes (/companies/:companyId/payments)
 export const companyPaymentsRouter = Router({ mergeParams: true });
 companyPaymentsRouter.use(authenticate);
+companyPaymentsRouter.use(agencyScope());
+companyPaymentsRouter.use(companyAccess('companyId'));
 
 // GET /companies/:companyId/payments
 companyPaymentsRouter.get(
@@ -34,11 +38,12 @@ companyPaymentsRouter.post(
 // 2. Direct routes (/payments)
 export const directPaymentsRouter = Router();
 directPaymentsRouter.use(authenticate);
+directPaymentsRouter.use(agencyScope());
 
 // GET /payments
 directPaymentsRouter.get(
   '/',
-  authorize(UserRole.OWNER, UserRole.ADMIN),
+  authorize(UserRole.PLATFORM_OWNER, AgencyRole.AGENCY_ADMIN),
   validate({ query: paymentsListQuerySchema }),
   paymentsController.listGlobal
 );
@@ -46,6 +51,7 @@ directPaymentsRouter.get(
 // PUT /payments/:id
 directPaymentsRouter.put(
   '/:id',
+  authorize(UserRole.PLATFORM_OWNER, AgencyRole.AGENCY_ADMIN),
   validate({ params: paymentIdParamSchema, body: updatePaymentSchema }),
   paymentsController.update
 );
@@ -53,13 +59,15 @@ directPaymentsRouter.put(
 // PUT /payments/:id/status
 directPaymentsRouter.put(
   '/:id/status',
+  authorize(UserRole.PLATFORM_OWNER, AgencyRole.AGENCY_ADMIN),
   validate({ params: paymentIdParamSchema, body: changePaymentStatusSchema }),
   paymentsController.changeStatus
 );
 
-// DELETE /payments/:id
+// DELETE /payments/:id (soft delete)
 directPaymentsRouter.delete(
   '/:id',
+  authorize(UserRole.PLATFORM_OWNER, AgencyRole.AGENCY_ADMIN),
   validate({ params: paymentIdParamSchema }),
-  paymentsController.hardDelete
+  paymentsController.softDelete
 );

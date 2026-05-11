@@ -30,8 +30,6 @@ export function useUpdateContentMutation() {
         queryClient.invalidateQueries({
           queryKey: ["company-workflow-snapshot", variables.companyId],
         }),
-        queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
-        queryClient.invalidateQueries({ queryKey: ["activity-logs"] }),
       ]);
     },
   });

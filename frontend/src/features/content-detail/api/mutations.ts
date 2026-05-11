@@ -17,10 +17,6 @@ async function invalidateWorkflowQueries(
     queryClient.invalidateQueries({ queryKey: ["content-detail", contentId] }),
     queryClient.invalidateQueries({ queryKey: ["contents"] }),
     queryClient.invalidateQueries({ queryKey: ["company-workflow-snapshot"] }),
-    queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
-    queryClient.invalidateQueries({ queryKey: ["calendar"] }),
-    queryClient.invalidateQueries({ queryKey: ["notifications"] }),
-    queryClient.invalidateQueries({ queryKey: ["activity-logs"] }),
   ]);
 }
 
@@ -96,6 +92,25 @@ export function useAddContentCommentMutation(contentId?: string) {
     onSuccess: async () => {
       const id = assertContentId(contentId);
       await queryClient.invalidateQueries({ queryKey: ["content-detail", id] });
+    },
+  });
+}
+
+export function useUnscheduleMutation(contentId?: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const id = assertContentId(contentId);
+
+      return apiClient(`/contents/${id}/status`, {
+        method: "PUT",
+        body: JSON.stringify({ status: "draft" }),
+      });
+    },
+    onSuccess: async () => {
+      const id = assertContentId(contentId);
+      await invalidateWorkflowQueries(queryClient, id);
     },
   });
 }

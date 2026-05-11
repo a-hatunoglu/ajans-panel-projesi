@@ -1,4 +1,5 @@
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { env } from '../../config';
 import crypto from 'crypto';
 import path from 'path';
@@ -101,5 +102,45 @@ export async function deleteFile(url: string): Promise<void> {
   } catch (error) {
     logger.error(`[StorageService] S3 delete failed for url ${url}`, { error });
     throw new Error('Dosya silinemedi.');
+  }
+}
+
+export async function generatePresignedUrl(
+  originalFilename: string,
+  mimetype: string
+): Promise<{ uploadUrl: string; finalUrl: string }> {
+  const filename = generateSafeFilename(originalFilename);
+  const key = `contents/${filename}`;
+
+  if (!s3Client || !env.STORAGE_S3_BUCKET) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('Storage is not configured. Presigned URL oluşturulamadı.');
+    }
+    logger.warn('[StorageService] S3 not configured. Using mocked fallback URL for presigned.');
+    return {
+      uploadUrl: `https://mock-storage.agencyos.app/dev/upload/${key}`,
+      finalUrl: `https://mock-storage.agencyos.app/dev/${key}`,
+    };
+  }
+
+  try {
+    const command = new PutObjectCommand({
+      Bucket: env.STORAGE_S3_BUCKET,
+      Key: key,
+      ContentType: mimetype,
+    });
+
+    const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 }); // 1 saat geçerli
+
+    let finalUrl = `https://${env.STORAGE_S3_BUCKET}.s3.${env.STORAGE_S3_REGION}.amazonaws.com/${key}`;
+    if (env.STORAGE_S3_ENDPOINT) {
+      const cleanEndpoint = env.STORAGE_S3_ENDPOINT.replace(/\/$/, '');
+      finalUrl = `${cleanEndpoint}/${env.STORAGE_S3_BUCKET}/${key}`;
+    }
+
+    return { uploadUrl, finalUrl };
+  } catch (error) {
+    logger.error(`[StorageService] Failed to generate presigned URL for ${key}`, { error });
+    throw new Error('Yükleme adresi oluşturulamadı.');
   }
 }

@@ -20,14 +20,14 @@ export function CalendarToolbar({
           <button
             type="button"
             onClick={onPreviousWeek}
-            className="p-1.5 text-zinc-400 transition-colors hover:text-white"
+            className="p-2.5 text-zinc-400 transition-colors hover:text-white"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <button
             type="button"
             onClick={onNextWeek}
-            className="p-1.5 text-zinc-400 transition-colors hover:text-white"
+            className="p-2.5 text-zinc-400 transition-colors hover:text-white"
           >
             <ChevronRight className="h-4 w-4" />
           </button>

@@ -2,7 +2,8 @@ import { Router } from 'express';
 import { validate } from '../../middleware/validate';
 import { authenticate } from '../../middleware/authenticate';
 import { authorize } from '../../middleware/authorize';
-import { UserRole } from '../../shared/types/enums';
+import { agencyScope } from '../../middleware/agency-scope';
+import { UserRole, AgencyRole } from '../../shared/types/enums';
 import {
   inviteUserSchema,
   updateMeSchema,
@@ -16,6 +17,7 @@ const router = Router();
 
 // Tüm users route'ları auth gerektirir
 router.use(authenticate);
+router.use(agencyScope());
 
 // ─── Profil (Kendi) ──────────────────────────────────────────
 
@@ -28,12 +30,15 @@ router.put('/me', validate({ body: updateMeSchema }), usersController.updateMe);
 // PUT /users/me/password — Şifremi değiştir
 router.put('/me/password', validate({ body: changePasswordSchema }), usersController.changePassword);
 
-// ─── Yönetim (Owner, Admin) ─────────────────────────────────
+// PUT /users/me/onboarding-complete — Onboarding turunu tamamla
+router.put('/me/onboarding-complete', usersController.completeOnboarding);
+
+// ─── Yönetim (Platform Owner, Agency Admin) ──────────────────
 
 // POST /users/invite — Kullanıcı davet et
 router.post(
   '/invite',
-  authorize(UserRole.OWNER, UserRole.ADMIN),
+  authorize(UserRole.PLATFORM_OWNER, AgencyRole.AGENCY_ADMIN),
   validate({ body: inviteUserSchema }),
   usersController.inviteUser,
 );
@@ -41,14 +46,14 @@ router.post(
 // GET /users — Kullanıcı listesi
 router.get(
   '/',
-  authorize(UserRole.OWNER, UserRole.ADMIN),
+  authorize(UserRole.PLATFORM_OWNER, AgencyRole.AGENCY_ADMIN),
   usersController.listUsers,
 );
 
 // GET /users/:id — Kullanıcı detay
 router.get(
   '/:id',
-  authorize(UserRole.OWNER, UserRole.ADMIN),
+  authorize(UserRole.PLATFORM_OWNER, AgencyRole.AGENCY_ADMIN),
   validate({ params: userIdParamSchema }),
   usersController.getUserById,
 );
@@ -56,7 +61,7 @@ router.get(
 // PUT /users/:id — Kullanıcı düzenle
 router.put(
   '/:id',
-  authorize(UserRole.OWNER, UserRole.ADMIN),
+  authorize(UserRole.PLATFORM_OWNER, AgencyRole.AGENCY_ADMIN),
   validate({ params: userIdParamSchema, body: updateUserSchema }),
   usersController.updateUser,
 );
@@ -64,7 +69,7 @@ router.put(
 // PUT /users/:id/deactivate — Devre dışı bırak
 router.put(
   '/:id/deactivate',
-  authorize(UserRole.OWNER, UserRole.ADMIN),
+  authorize(UserRole.PLATFORM_OWNER, AgencyRole.AGENCY_ADMIN),
   validate({ params: userIdParamSchema }),
   usersController.deactivateUser,
 );
@@ -72,7 +77,7 @@ router.put(
 // POST /users/:id/reset-password — Şifre sıfırlama linki gönder
 router.post(
   '/:id/reset-password',
-  authorize(UserRole.OWNER, UserRole.ADMIN),
+  authorize(UserRole.PLATFORM_OWNER, AgencyRole.AGENCY_ADMIN),
   validate({ params: userIdParamSchema }),
   usersController.sendResetLink,
 );

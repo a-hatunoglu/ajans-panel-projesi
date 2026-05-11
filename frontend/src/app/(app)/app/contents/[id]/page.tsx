@@ -11,11 +11,13 @@ import {
   useApproveContentMutation,
   useRejectContentMutation,
   useSubmitForReviewMutation,
+  useUnscheduleMutation,
 } from "@/features/content-detail/api/mutations";
 import { ContentHeader } from "@/features/content-detail/components/content-header";
 import { ContentBody } from "@/features/content-detail/components/content-body";
 import { ContentWorkflowSidebar } from "@/features/content-detail/components/content-workflow-sidebar";
 import { getContentPermissions } from "@/features/content-detail/permissions";
+import { useCompanyRoles } from "@/hooks/use-company-roles";
 import { useI18n } from "@/i18n/provider";
 
 function getErrorMessage(error: unknown, fallback: string) {
@@ -28,12 +30,14 @@ export default function ContentDetailPage() {
   const params = useParams<{ id: string }>();
   const contentId = Array.isArray(params.id) ? params.id[0] : params.id;
   const { data, isLoading, isError, error } = useContentDetail(contentId);
+  const { companyRoles } = useCompanyRoles(data?.companyId);
   const [commentDraft, setCommentDraft] = useState("");
   const [workflowError, setWorkflowError] = useState<string | null>(null);
   const submitForReviewMutation = useSubmitForReviewMutation(contentId);
   const approveMutation = useApproveContentMutation(contentId);
   const rejectMutation = useRejectContentMutation(contentId);
   const addCommentMutation = useAddContentCommentMutation(contentId);
+  const unscheduleMutation = useUnscheduleMutation(contentId);
 
   if (!contentId) {
     return (
@@ -70,11 +74,12 @@ export default function ContentDetailPage() {
     );
   }
 
-  const permissions = getContentPermissions(data, user, isAuthLoading);
+  const permissions = getContentPermissions(data, user, companyRoles, isAuthLoading);
   const isWorkflowActionPending =
     submitForReviewMutation.isPending ||
     approveMutation.isPending ||
-    rejectMutation.isPending;
+    rejectMutation.isPending ||
+    unscheduleMutation.isPending;
 
   async function handleSubmitForReview() {
     setWorkflowError(null);
@@ -116,6 +121,16 @@ export default function ContentDetailPage() {
     }
   }
 
+  async function handleUnschedule() {
+    setWorkflowError(null);
+
+    try {
+      await unscheduleMutation.mutateAsync();
+    } catch (mutationError) {
+      setWorkflowError(getErrorMessage(mutationError, t("contentDetail.workflow.actionError")));
+    }
+  }
+
   async function handleSendComment() {
     const comment = commentDraft.trim();
 
@@ -143,15 +158,18 @@ export default function ContentDetailPage() {
         canEdit={permissions.canEdit}
         canSchedule={permissions.canSchedule}
         canPublish={permissions.canPublish}
+        canUnschedule={permissions.canUnschedule}
         isWorking={isWorkflowActionPending}
         onSubmitForReview={handleSubmitForReview}
         onApprove={handleApprove}
         onRequestRevision={handleRequestRevision}
+        onUnschedule={handleUnschedule}
       />
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <ContentBody data={data} />
+          {/* Detail page is read-only — media management is on /edit page */}
+          <ContentBody data={data} canEdit={false} />
         </div>
 
         <div className="lg:col-span-1">

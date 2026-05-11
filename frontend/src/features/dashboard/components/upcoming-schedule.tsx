@@ -1,5 +1,7 @@
 "use client";
 
+import React from "react";
+
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import type { ScheduleItem } from "../types";
@@ -28,7 +30,7 @@ function getContextLabel(
   return `${platformLabel} / ${item.socialAccountName}`;
 }
 
-export function UpcomingSchedule({ items }: { items: ScheduleItem[] }) {
+export const UpcomingSchedule = React.memo(function UpcomingSchedule({ items }: { items: ScheduleItem[] }) {
   const { t } = useI18n();
   const uiCopy = useUiCopy();
   const { getPlatformLabel } = useLabels();
@@ -36,14 +38,14 @@ export function UpcomingSchedule({ items }: { items: ScheduleItem[] }) {
 
   if (items.length === 0) {
     return (
-      <div className="p-8 text-center border border-white/5 rounded-xl bg-zinc-950">
+      <div className="p-8 text-center">
         <p className="text-sm text-zinc-500">{t("dashboard.emptySchedule")}</p>
       </div>
     );
   }
 
   return (
-    <div className="border border-white/5 rounded-xl bg-zinc-950 divide-y divide-white/5">
+    <div className="divide-y divide-white/[0.04] max-h-[360px] overflow-y-auto">
       {items.map((item) => {
         const platformLabel = getPlatformLabel(item.platform);
         const contextLabel = getContextLabel(item, platformLabel, uiCopy.platformUnavailable);
@@ -73,4 +75,4 @@ export function UpcomingSchedule({ items }: { items: ScheduleItem[] }) {
       })}
     </div>
   );
-}
+});

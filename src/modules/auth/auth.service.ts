@@ -58,7 +58,7 @@ export async function register(data: RegisterInput) {
       passwordHash: passwordHashed,
       firstName: data.firstName,
       lastName: data.lastName,
-      role: UserRole.OWNER,
+      role: UserRole.PLATFORM_OWNER,
     },
     select: USER_SAFE_SELECT,
   });

@@ -3,6 +3,7 @@ import { env } from './config';
 import { logger } from './config/logger';
 import { disconnectDatabase } from './config/database';
 import { startJobs } from './jobs';
+import { initSocketServer } from './config/socket';
 
 const server = app.listen(env.PORT, () => {
   logger.info(`🚀 Sunucu ${env.NODE_ENV} modunda çalışıyor: http://localhost:${env.PORT}`);
@@ -10,6 +11,9 @@ const server = app.listen(env.PORT, () => {
   logger.info(`❤️  Health: http://localhost:${env.PORT}${env.API_PREFIX}/health`);
   startJobs();
 });
+
+// Initialize Socket.io
+initSocketServer(server);
 
 // ─── Graceful Shutdown ───────────────────────────────────────
 

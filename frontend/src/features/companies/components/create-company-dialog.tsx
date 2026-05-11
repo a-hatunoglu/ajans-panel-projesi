@@ -8,11 +8,22 @@ import { X, Loader2, Building2 } from "lucide-react";
 import { useI18n } from "@/i18n/provider";
 import { useCreateCompanyMutation } from "@/features/companies/api/mutations";
 
+const urlOrDomain = z.string().transform((val) => {
+  if (!val) return val;
+  const trimmed = val.trim();
+  if (!trimmed) return "";
+  // Auto-prepend https:// if no protocol
+  if (!/^https?:\/\//i.test(trimmed)) {
+    return `https://${trimmed}`;
+  }
+  return trimmed;
+}).pipe(z.string().url("Geçerli bir URL giriniz. Örn: bilgekoc.moniyazilim.com").or(z.literal("")));
+
 const createCompanySchema = z.object({
-  name: z.string().min(1, "Company name is required.").max(200),
-  website: z.string().url("Enter a valid URL.").or(z.literal("")).optional(),
+  name: z.string().min(1, "Şirket adı zorunludur.").max(200),
+  website: urlOrDomain.optional(),
   phone: z.string().max(30).optional(),
-  email: z.string().email("Enter a valid email.").or(z.literal("")).optional(),
+  email: z.string().email("Geçerli bir e-posta giriniz.").or(z.literal("")).optional(),
 });
 
 type CreateCompanyForm = z.infer<typeof createCompanySchema>;
@@ -62,7 +73,7 @@ export function CreateCompanyDialog({
 
       const response = await mutation.mutateAsync(payload);
       reset();
-      onSuccess(response.data.id);
+      onSuccess(response.data.company.id);
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : t("companies.create.submitError");
@@ -108,7 +119,7 @@ export function CreateCompanyDialog({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="px-6 py-5 space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 px-6 py-5">
           {submitError && (
             <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-md text-sm text-red-500 font-medium">
               {submitError}
@@ -116,7 +127,7 @@ export function CreateCompanyDialog({
           )}
 
           {/* Name (required) */}
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-1.5">
             <label
               htmlFor="company-name"
               className="text-xs font-medium text-zinc-300"
@@ -140,7 +151,7 @@ export function CreateCompanyDialog({
           </div>
 
           {/* Email */}
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-1.5">
             <label
               htmlFor="company-email"
               className="text-xs font-medium text-zinc-300"
@@ -163,7 +174,7 @@ export function CreateCompanyDialog({
           </div>
 
           {/* Website */}
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-1.5">
             <label
               htmlFor="company-website"
               className="text-xs font-medium text-zinc-300"
@@ -186,7 +197,7 @@ export function CreateCompanyDialog({
           </div>
 
           {/* Phone */}
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-1.5">
             <label
               htmlFor="company-phone"
               className="text-xs font-medium text-zinc-300"

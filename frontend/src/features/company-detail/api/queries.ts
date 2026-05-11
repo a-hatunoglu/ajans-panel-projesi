@@ -10,8 +10,6 @@ import type {
   CompanyMemberRole,
   CompanyPaymentsListData,
   CompanySocialAccountsData,
-  CompanyWorkflowCountStatus,
-  CompanyWorkflowCounts,
   CompanyWorkflowSnapshot,
   CompanyUsersData,
 } from "../types";
@@ -89,6 +87,7 @@ type CompanyContentsResponse = {
 
 type CompanyUserRecord = {
   id: string;
+  roles: string[];
   user: {
     id: string;
     email: string;
@@ -167,8 +166,6 @@ type CompanyActivityResponse = {
 const COMPANY_CONTENTS_PER_PAGE = 20;
 const COMPANY_PAYMENTS_PER_PAGE = 20;
 const COMPANY_ACTIVITY_PER_PAGE = 20;
-const COMPANY_WORKFLOW_FETCH_PER_PAGE = 100;
-
 function mapCompanyDetail(
   company: CompanyRecord,
   socialAccountsConnected: number
@@ -251,9 +248,12 @@ function mapCompanyUserItem(member: CompanyUserRecord) {
       member.user.lastName,
       member.user.email,
     ),
+    firstName: member.user.firstName,
+    lastName: member.user.lastName,
     email: member.user.email,
     avatarUrl: member.user.avatarUrl,
-    role: member.user.role,
+    roles: member.roles,
+    globalRole: member.user.role,
     isActive: member.user.isActive,
   };
 }
@@ -353,46 +353,10 @@ async function fetchCompanyContentsPage(companyId: string, page: number, perPage
   });
 }
 
-async function fetchAllCompanyContents(companyId: string) {
-  const firstPage = await fetchCompanyContentsPage(
-    companyId,
-    1,
-    COMPANY_WORKFLOW_FETCH_PER_PAGE,
-  );
-
-  if (firstPage.meta.totalPages <= 1) {
-    return firstPage.data;
-  }
-
-  const remainingPages = await Promise.all(
-    Array.from({ length: firstPage.meta.totalPages - 1 }, (_, index) =>
-      fetchCompanyContentsPage(
-        companyId,
-        index + 2,
-        COMPANY_WORKFLOW_FETCH_PER_PAGE,
-      ),
-    ),
-  );
-
-  return [
-    ...firstPage.data,
-    ...remainingPages.flatMap((response) => response.data),
-  ];
-}
-
-function createWorkflowCounts(): CompanyWorkflowCounts {
-  return {
-    draft: 0,
-    in_review: 0,
-    revise: 0,
-    approved: 0,
-    scheduled: 0,
-  };
-}
-
-function isWorkflowCountStatus(status: ContentStatus): status is CompanyWorkflowCountStatus {
-  return status !== "published";
-}
+type WorkflowSnapshotResponse = {
+  success: boolean;
+  data: CompanyWorkflowSnapshot;
+};
 
 export function useCompanyDetail(id?: string) {
   return useQuery({
@@ -417,42 +381,37 @@ export function useCompanyWorkflowSnapshot(companyId?: string) {
     queryKey: ["company-workflow-snapshot", companyId],
     enabled: Boolean(companyId),
     queryFn: async (): Promise<CompanyWorkflowSnapshot> => {
-      const contents = await fetchAllCompanyContents(companyId!);
-      const counts = createWorkflowCounts();
-
-      const recentItems = contents
-        .map((content) => {
-          if (isWorkflowCountStatus(content.status)) {
-            counts[content.status] += 1;
-          }
-
-          const { dateAt, dateKind } = mapContentListDate(content);
-
-          return {
-            id: content.id,
-            title: content.title,
-            status: content.status,
-            platform: content.socialAccount?.platform ?? null,
-            assignedDesigner: content.assignedDesigner,
-            assignedEditor: content.assignedEditor,
-            dateAt,
-            dateKind,
-            updatedAt: content.updatedAt,
-          };
-        })
-        .sort(
-          (left, right) =>
-            new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime(),
-        )
-        .slice(0, 5);
-
-      return {
-        counts,
-        recentItems,
-      };
+      const response = await apiClient<WorkflowSnapshotResponse>(
+        `/companies/${companyId}/contents/workflow-snapshot`
+      );
+      return response.data;
     },
   });
 }
+
+type CompanyAnalyticsResponse = {
+  success: boolean;
+  data: {
+    totalContents: number;
+    pendingApprovals: number;
+    scheduledContents: number;
+    activeSocialAccounts: number;
+  };
+};
+
+export function useCompanyAnalytics(companyId?: string) {
+  return useQuery({
+    queryKey: ["company-analytics", companyId],
+    enabled: Boolean(companyId),
+    queryFn: async () => {
+      const response = await apiClient<CompanyAnalyticsResponse>(
+        `/companies/${companyId}/analytics`
+      );
+      return response.data;
+    },
+  });
+}
+
 
 export function useCompanyContents(companyId?: string, page = 1) {
   return useQuery({

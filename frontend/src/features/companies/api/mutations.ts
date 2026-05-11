@@ -13,9 +13,11 @@ export type CreateCompanyPayload = {
 type CreateCompanyResponse = {
   success: boolean;
   data: {
-    id: string;
-    name: string;
-    slug: string;
+    company: {
+      id: string;
+      name: string;
+      slug: string;
+    };
   };
 };
 
@@ -31,6 +33,56 @@ export function useCreateCompanyMutation() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["companies"] });
+      await queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+}
+
+export function useSoftDeleteCompanyMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (companyId: string) => {
+      return apiClient(`/companies/${companyId}`, {
+        method: "DELETE",
+      });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["companies"] });
+      await queryClient.invalidateQueries({ queryKey: ["companies-trash"] });
+      await queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+}
+
+export function useRestoreCompanyMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (companyId: string) => {
+      return apiClient(`/companies/${companyId}/restore`, {
+        method: "POST",
+      });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["companies"] });
+      await queryClient.invalidateQueries({ queryKey: ["companies-trash"] });
+      await queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+}
+
+export function usePermanentDeleteCompanyMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (companyId: string) => {
+      return apiClient(`/companies/${companyId}/permanent`, {
+        method: "DELETE",
+      });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["companies-trash"] });
     },
   });
 }

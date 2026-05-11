@@ -10,7 +10,12 @@ export type User = {
   lastName: string;
   avatarUrl: string | null;
   role: string;
+  agencyId?: string | null;
+  agencyRole?: string | null;
+  companyRoles?: string[];
   companyId?: string | null;
+  forcePasswordChange?: boolean;
+  hasCompletedOnboarding?: boolean;
 };
 
 type ApiResponse<T> = {
@@ -44,6 +49,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           suppressAuthRedirect: true,
         });
         setUser(res.data.user);
+
+        if (res.data.user.forcePasswordChange && typeof window !== "undefined") {
+          if (!window.location.pathname.startsWith("/force-password")) {
+            window.location.href = "/force-password";
+          }
+        }
       } catch {
         setUser(null);
       } finally {

@@ -2,13 +2,19 @@
 
 import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
-import { useAuth } from "@/providers/auth-provider";
+import dynamic from "next/dynamic";
+import { useAuth } from "@/providers/auth-provider"
+import { canManageCompanies } from "@/lib/roles";;
 import { useCompanyPayments, useCompanyDetail } from "../../api/queries";
 import { CompanyInlineStatePanel } from "../company-inline-state-panel";
 import { CompanyPaymentListItem } from "../company-payment-list-item";
-import { CreatePaymentDialog } from "@/features/payments/components/create-payment-dialog";
 import { ContentsPagination } from "@/features/contents/components/contents-pagination";
 import { useI18n } from "@/i18n/provider";
+
+const CreatePaymentDialog = dynamic(
+  () => import("@/features/payments/components/create-payment-dialog").then((m) => m.CreatePaymentDialog),
+  { ssr: false }
+);
 
 interface CompanyPaymentsTabProps {
   companyId: string;
@@ -18,7 +24,7 @@ export function CompanyPaymentsTab({ companyId }: CompanyPaymentsTabProps) {
   const { t } = useI18n();
   const { user } = useAuth();
   const role = user?.role || "guest";
-  const canManage = ["owner", "admin"].includes(role);
+  const canManage = canManageCompanies(user?.role, user?.agencyRole ?? undefined);
 
   const [page, setPage] = useState(1);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);

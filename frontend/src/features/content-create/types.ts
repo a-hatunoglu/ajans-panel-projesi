@@ -1,4 +1,4 @@
-export type CreateEligibleRole = "owner" | "admin" | "editor" | "designer" | "client";
+export type CreateEligibleRole = "platform_owner" | "user" | "editor" | "designer" | "client" | "guest";
 
 export type CreateCurrentUser = {
   id: string;
@@ -12,6 +12,7 @@ export type ContentCreateFormValues = {
   body: string;
   assignedDesignerId: string;
   assignedEditorId: string;
+  scheduledAt?: string;
 };
 
 export type ContentCreateCompanyOption = {
@@ -30,7 +31,8 @@ export type ContentCreateMemberOption = {
   id: string;
   name: string;
   email: string;
-  role: CreateEligibleRole;
+  roles: string[];
+  globalRole: CreateEligibleRole;
   isActive: boolean;
 };
 

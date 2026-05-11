@@ -33,6 +33,16 @@ type BackendCalendarContent = {
     platform: BackendPlatform;
     accountName: string;
   } | null;
+  assignedDesigner: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  } | null;
+  assignedEditor: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  } | null;
 };
 
 type CalendarResponse = {
@@ -47,7 +57,9 @@ type CompaniesResponse = {
   data: Company[];
 };
 
-const GLOBAL_CALENDAR_ROLES = new Set(["owner", "admin"]);
+function isGlobalCalendarRole(role: string, agencyRole?: string): boolean {
+  return role === "platform_owner" || agencyRole === "agency_admin";
+}
 
 function createEmptyWeek(weekStart: Date): CalendarDay[] {
   const normalizedWeekStart = startOfDay(weekStart);
@@ -92,6 +104,8 @@ function mapCalendarWeek(contents: BackendCalendarContent[], weekStart: Date) {
           socialAccountName: content.socialAccount?.accountName ?? null,
           companyName: content.company.name,
           displayAt,
+          assignedDesigner: content.assignedDesigner,
+          assignedEditor: content.assignedEditor,
         },
       };
     })
@@ -111,16 +125,16 @@ function mapCalendarWeek(contents: BackendCalendarContent[], weekStart: Date) {
   return days;
 }
 
-export function useCalendarWeek(weekStart: Date, role: string, enabled = true) {
+export function useCalendarWeek(weekStart: Date, role: string, enabled = true, agencyRole?: string) {
   return useQuery({
-    queryKey: ["calendar", weekStart.toISOString(), role],
+    queryKey: ["calendar", weekStart.toISOString(), role, agencyRole],
     enabled,
     placeholderData: (previousData) => previousData,
     queryFn: async () => {
       const startDate = startOfDay(weekStart).toISOString();
       const endDate = endOfDay(addDays(weekStart, 6)).toISOString();
 
-      if (GLOBAL_CALENDAR_ROLES.has(role)) {
+      if (isGlobalCalendarRole(role, agencyRole)) {
         const response = await apiClient<CalendarResponse>("/contents/calendar", {
           params: {
             startDate,

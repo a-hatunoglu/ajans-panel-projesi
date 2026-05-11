@@ -7,10 +7,13 @@ import * as z from "zod";
 import { X, Loader2, UserCog } from "lucide-react";
 import { useI18n } from "@/i18n/provider";
 import { useAuth } from "@/providers/auth-provider";
-import { useUpdateUserMutation } from "../api/mutations";
+import { 
+  useUpdateUserMutation, 
+  useUpdateCompanyUserRolesMutation 
+} from "../api/mutations";
 import type { CompanyUserItem } from "../types";
 
-const EDITABLE_ROLES = ["admin", "editor", "designer", "client"] as const;
+const OPERATIONAL_ROLES = ["editor", "designer", "client"] as const;
 
 function editUserSchema(t: (key: string) => string) {
   return z.object({
@@ -20,9 +23,6 @@ function editUserSchema(t: (key: string) => string) {
     lastName: z
       .string()
       .min(1, t("companyDetail.editUser.validation.lastNameRequired")),
-    role: z.enum(EDITABLE_ROLES, {
-      message: t("companyDetail.editUser.validation.roleRequired"),
-    }),
   });
 }
 
@@ -44,7 +44,11 @@ export function EditUserDialog({
   const { t } = useI18n();
   const { user: currentUser, updateUser } = useAuth();
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const mutation = useUpdateUserMutation(companyId);
+  const [selectedRoles, setSelectedRoles] = useState<string[]>(user.roles);
+  const mutationUser = useUpdateUserMutation(companyId);
+  const mutationRoles = useUpdateCompanyUserRolesMutation(companyId);
+
+  const isPending = mutationUser.isPending || mutationRoles.isPending;
 
   const schema = useMemo(() => editUserSchema(t), [t]);
 
@@ -56,9 +60,8 @@ export function EditUserDialog({
   } = useForm<EditUserForm>({
     resolver: zodResolver(schema),
     defaultValues: {
-      firstName: user.name.split(" ")[0] || "",
-      lastName: user.name.split(" ").slice(1).join(" ") || "",
-      role: (user.role === "owner" ? "admin" : user.role) as EditUserForm["role"],
+      firstName: user.firstName,
+      lastName: user.lastName,
     },
   });
 
@@ -66,47 +69,74 @@ export function EditUserDialog({
   useEffect(() => {
     if (open) {
       reset({
-        firstName: user.name.split(" ")[0] || "",
-        lastName: user.name.split(" ").slice(1).join(" ") || "",
-        role: (user.role === "owner" ? "admin" : user.role) as EditUserForm["role"],
+        firstName: user.firstName,
+        lastName: user.lastName,
       });
+      setSelectedRoles(user.roles);
       setSubmitError(null);
     }
   }, [open, user, reset]);
 
   const handleClose = useCallback(() => {
-    if (mutation.isPending) return;
+    if (isPending) return;
     reset();
+    setSelectedRoles(user.roles);
     setSubmitError(null);
     onClose();
-  }, [mutation.isPending, reset, onClose]);
+  }, [isPending, reset, onClose, user.roles]);
+
+  const toggleRole = useCallback((role: string) => {
+    setSelectedRoles((prev) =>
+      prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]
+    );
+  }, []);
+
+  // Track whether roles actually changed
+  const rolesChanged = useMemo(() => {
+    const sorted1 = [...selectedRoles].sort();
+    const sorted2 = [...user.roles].sort();
+    if (sorted1.length !== sorted2.length) return true;
+    return sorted1.some((r, i) => r !== sorted2[i]);
+  }, [selectedRoles, user.roles]);
+
+  const hasChanges = isDirty || rolesChanged;
 
   const onSubmit = async (data: EditUserForm) => {
+    if (selectedRoles.length === 0) return;
     setSubmitError(null);
 
     try {
-      await mutation.mutateAsync({
-        userId: user.userId,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        role: data.role,
-      });
+      const promises: Promise<unknown>[] = [];
+
+      // Update user name if changed
+      if (isDirty) {
+        promises.push(
+          mutationUser.mutateAsync({
+            userId: user.userId,
+            firstName: data.firstName,
+            lastName: data.lastName,
+          })
+        );
+      }
+
+      // Update company roles if changed
+      if (rolesChanged) {
+        promises.push(
+          mutationRoles.mutateAsync({
+            userId: user.userId,
+            roles: selectedRoles,
+          })
+        );
+      }
+
+      await Promise.all(promises);
 
       // Sync auth context when editing self
-      if (currentUser && user.userId === currentUser.id) {
-        const roleChanged = data.role !== currentUser.role;
-
+      if (currentUser && user.userId === currentUser.id && isDirty) {
         updateUser({
           firstName: data.firstName,
           lastName: data.lastName,
-          role: data.role,
         });
-
-        if (roleChanged) {
-          // Role change invalidates nav/permissions — reload to reset shell
-          window.location.href = "/app";
-          return;
-        }
       }
 
       onClose();
@@ -120,6 +150,12 @@ export function EditUserDialog({
   };
 
   if (!open) return null;
+
+  const roleLabels: Record<string, string> = {
+    editor: t("companyDetail.editUser.form.roles.editor"),
+    designer: t("companyDetail.editUser.form.roles.designer"),
+    client: t("companyDetail.editUser.form.roles.client"),
+  };
 
   const inputClassName =
     "flex h-9 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-primary transition-colors disabled:opacity-50";
@@ -152,7 +188,7 @@ export function EditUserDialog({
           <button
             type="button"
             onClick={handleClose}
-            disabled={mutation.isPending}
+            disabled={isPending}
             className="h-7 w-7 flex items-center justify-center rounded-md text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors disabled:opacity-50"
           >
             <X className="w-4 h-4" />
@@ -160,7 +196,7 @@ export function EditUserDialog({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="px-6 py-5 space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 px-6 py-5">
           {submitError && (
             <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-md text-sm text-red-500 font-medium">
               {submitError}
@@ -169,7 +205,7 @@ export function EditUserDialog({
 
           {/* First Name + Last Name */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
+            <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="edit-user-firstname"
                 className="text-xs font-medium text-zinc-300"
@@ -179,7 +215,7 @@ export function EditUserDialog({
               <input
                 id="edit-user-firstname"
                 type="text"
-                disabled={mutation.isPending}
+                disabled={isPending}
                 className={inputClassName}
                 {...register("firstName")}
               />
@@ -190,7 +226,7 @@ export function EditUserDialog({
               )}
             </div>
 
-            <div className="space-y-1.5">
+            <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="edit-user-lastname"
                 className="text-xs font-medium text-zinc-300"
@@ -200,7 +236,7 @@ export function EditUserDialog({
               <input
                 id="edit-user-lastname"
                 type="text"
-                disabled={mutation.isPending}
+                disabled={isPending}
                 className={inputClassName}
                 {...register("lastName")}
               />
@@ -212,29 +248,34 @@ export function EditUserDialog({
             </div>
           </div>
 
-          {/* Role */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="edit-user-role"
-              className="text-xs font-medium text-zinc-300"
-            >
-              {t("companyDetail.editUser.form.role")} *
+          {/* Roles — Checkboxes */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-zinc-300">
+              {t("companyDetail.editUser.form.rolesLabel")}
             </label>
-            <select
-              id="edit-user-role"
-              disabled={mutation.isPending}
-              className={inputClassName}
-              {...register("role")}
-            >
-              <option value="admin">{t("companyDetail.editUser.form.roles.admin")}</option>
-              <option value="editor">{t("companyDetail.editUser.form.roles.editor")}</option>
-              <option value="designer">{t("companyDetail.editUser.form.roles.designer")}</option>
-              <option value="client">{t("companyDetail.editUser.form.roles.client")}</option>
-            </select>
-            {errors.role && (
-              <span className="text-xs text-red-500">
-                {errors.role.message}
-              </span>
+            <div className="flex flex-col gap-2">
+              {OPERATIONAL_ROLES.map((role) => (
+                <label
+                  key={role}
+                  className="flex items-center gap-3 rounded-lg border border-white/5 bg-zinc-900/20 px-4 py-3 cursor-pointer hover:bg-zinc-900/40 transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedRoles.includes(role)}
+                    onChange={() => toggleRole(role)}
+                    disabled={isPending}
+                    className="h-4 w-4 rounded border-zinc-700 bg-zinc-900 text-blue-500 focus:ring-1 focus:ring-blue-500 focus:ring-offset-0"
+                  />
+                  <span className="text-sm text-zinc-200">
+                    {roleLabels[role] || role}
+                  </span>
+                </label>
+              ))}
+            </div>
+            {selectedRoles.length === 0 && (
+              <p className="mt-1 text-xs text-amber-400/80">
+                {t("companyDetail.users.add.rolesRequired")}
+              </p>
             )}
           </div>
 
@@ -243,17 +284,17 @@ export function EditUserDialog({
             <button
               type="button"
               onClick={handleClose}
-              disabled={mutation.isPending}
+              disabled={isPending}
               className="h-9 px-4 text-sm font-medium text-zinc-400 hover:text-zinc-200 transition-colors disabled:opacity-50"
             >
               {t("companyDetail.editUser.form.cancel")}
             </button>
             <button
               type="submit"
-              disabled={mutation.isPending || !isDirty}
+              disabled={isPending || !hasChanges || selectedRoles.length === 0}
               className="h-9 px-4 flex items-center gap-2 bg-white text-black text-sm font-medium rounded-md hover:bg-zinc-200 transition-all disabled:opacity-50"
             >
-              {mutation.isPending ? (
+              {isPending ? (
                 <>
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   {t("companyDetail.editUser.form.submitting")}

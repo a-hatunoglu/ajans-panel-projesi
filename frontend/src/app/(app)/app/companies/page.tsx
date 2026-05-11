@@ -7,7 +7,9 @@ import { PageContainer } from "@/components/shared/page-container";
 import { CompaniesToolbar } from "@/features/companies/components/companies-toolbar";
 import { CompanyListItem } from "@/features/companies/components/company-list-item";
 import { CreateCompanyDialog } from "@/features/companies/components/create-company-dialog";
+import { CompaniesTrashSection } from "@/features/companies/components/companies-trash-section";
 import { useCompanies } from "@/features/companies/api/queries";
+import { canManageCompanies } from "@/lib/roles";
 import { Loader2, Building2, Plus } from "lucide-react";
 import { useI18n } from "@/i18n/provider";
 
@@ -16,7 +18,8 @@ export default function CompaniesPage() {
   const { user } = useAuth();
   const router = useRouter();
   const role = user?.role || "guest";
-  const isAdmin = ["owner", "admin"].includes(role);
+  const agencyRole = user?.agencyRole || undefined;
+  const isAdmin = canManageCompanies(role, agencyRole ?? undefined);
   const { data: companies = [], isLoading, isError } = useCompanies();
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -121,6 +124,9 @@ export default function CompaniesPage() {
         onClose={handleCreateClose}
         onSuccess={handleCreateSuccess}
       />
+
+      {/* Trash section — only for owner/admin */}
+      {isAdmin && <CompaniesTrashSection />}
     </PageContainer>
   );
 }

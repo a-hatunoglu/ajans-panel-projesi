@@ -18,7 +18,10 @@ import { notificationsRoutes } from './modules/notifications/notifications.route
 import { companyPaymentsRouter, directPaymentsRouter } from './modules/payments/payments.routes';
 import activityLogsRoutes from './modules/activity-logs/activity-logs.routes';
 import * as activityLogsController from './modules/activity-logs/activity-logs.controller';
+import { systemHealthRoutes } from './modules/system-health/system-health.routes';
+import { agencyRoutes } from './modules/agencies/agencies.routes';
 import { authenticate } from './middleware/authenticate';
+import { companyAccess } from './middleware/company-access';
 
 const app = express();
 
@@ -79,7 +82,9 @@ app.use(`${env.API_PREFIX}/notifications`, notificationsRoutes);
 app.use(`${env.API_PREFIX}/companies/:companyId/payments`, companyPaymentsRouter);
 app.use(`${env.API_PREFIX}/payments`, directPaymentsRouter);
 app.use(`${env.API_PREFIX}/activity-logs`, activityLogsRoutes);
-app.get(`${env.API_PREFIX}/companies/:companyId/activity-logs`, authenticate, activityLogsController.listByCompany);
+app.get(`${env.API_PREFIX}/companies/:companyId/activity-logs`, authenticate, companyAccess('companyId'), activityLogsController.listByCompany);
+app.use(`${env.API_PREFIX}/system/health`, systemHealthRoutes);
+app.use(`${env.API_PREFIX}/agencies`, agencyRoutes);
 
 // ─── 404 Handler ─────────────────────────────────────────────
 app.use((_req, _res, next) => {

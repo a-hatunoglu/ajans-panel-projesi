@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
 import { env } from '../../config';
+import { logger } from '../../config/logger';
 
 // ─── Transport Initialization ────────────────────────────────
 
@@ -22,13 +23,13 @@ if (smtpConfigured) {
     greetingTimeout: 10_000,
     socketTimeout: 15_000,
   });
-  console.log('✅ SMTP mailer initialized.');
+  logger.info('SMTP mailer initialized.');
 } else if (isProduction) {
   // In production, missing SMTP is a fatal configuration error.
-  console.error('❌ SMTP not configured in production. Set SMTP_HOST, SMTP_USER, SMTP_PASS.');
+  logger.error('SMTP not configured in production. Set SMTP_HOST, SMTP_USER, SMTP_PASS.');
   process.exit(1);
 } else {
-  console.warn('⚠️  SMTP not configured — email delivery disabled in development. Set SMTP_HOST, SMTP_USER, SMTP_PASS in .env to enable.');
+  logger.warn('SMTP not configured — email delivery disabled in development. Set SMTP_HOST, SMTP_USER, SMTP_PASS in .env to enable.');
 }
 
 // ─── Helpers ─────────────────────────────────────────────────
@@ -45,7 +46,7 @@ function buildLink(path: string, token: string): string {
 async function send(to: string, subject: string, html: string): Promise<void> {
   if (!smtpConfigured || !transporter) {
     // Only reachable in non-production (prod exits at boot)
-    console.warn(`📧 [DEV SKIP] Email to ${to} — SMTP not configured. Subject: "${subject}"`);
+    logger.warn(`[DEV SKIP] Email to ${to} — SMTP not configured. Subject: "${subject}"`);
     return;
   }
 
@@ -56,7 +57,7 @@ async function send(to: string, subject: string, html: string): Promise<void> {
     html,
   });
 
-  console.log(`📧 [SENT] Email to ${to} — Subject: "${subject}"`);
+  logger.info(`[SENT] Email to ${to} — Subject: "${subject}"`);
 }
 
 // ─── Invite Email ────────────────────────────────────────────

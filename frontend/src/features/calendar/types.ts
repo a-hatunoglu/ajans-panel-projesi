@@ -8,6 +8,16 @@ export type CalendarItem = {
   socialAccountName: string | null;
   companyName: string;
   displayAt: string;
+  assignedDesigner: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  } | null;
+  assignedEditor: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  } | null;
 };
 
 export type CalendarDay = {

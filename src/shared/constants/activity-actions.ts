@@ -8,6 +8,7 @@ export const ActivityAction = {
   COMPANY_HARD_DELETE: 'company.hard_delete',
   COMPANY_USER_ADD: 'company.user_add',
   COMPANY_USER_REMOVE: 'company.user_remove',
+  COMPANY_USER_UPDATE: 'company.user_update',
   SOCIAL_ACCOUNT_CREATE: 'social_account.create',
   SOCIAL_ACCOUNT_UPDATE: 'social_account.update',
   SOCIAL_ACCOUNT_DELETE: 'social_account.delete',

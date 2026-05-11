@@ -28,8 +28,28 @@ export type ScheduleItem = {
 export type DashboardSections = {
   attention: boolean;
   schedule: boolean;
+  activity: boolean;
+  billing: boolean;
 };
 
+export type DashboardActivityItem = {
+  id: string;
+  actorName: string;
+  action: string;
+  companyName: string | null;
+  createdAt: string;
+};
+
+export type DashboardBillingItem = {
+  id: string;
+  companyName: string;
+  amount: number;
+  currency: string;
+  dueDate: string;
+  status: "pending" | "overdue";
+};
+
+// Keep legacy ActivityItem for component compatibility
 export type ActivityItem = {
   id: string;
   action: string;
@@ -50,6 +70,8 @@ export type DashboardData = {
   stats: StatItem[];
   attentionItems: AttentionItem[];
   scheduleItems: ScheduleItem[];
+  activityItems: DashboardActivityItem[];
+  billingItems: DashboardBillingItem[];
   sections: DashboardSections;
   hasAnyCompany: boolean | null;
 };

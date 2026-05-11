@@ -5,11 +5,13 @@ import type { ContentDetailData } from "./types";
 export type ContentPermissionUser = {
   id: string;
   role: string;
+  agencyRole?: string | null;
 } | null;
 
 export function getContentPermissions(
   data: ContentDetailData,
   user: ContentPermissionUser,
+  _companyRoles: string[],
   isAuthLoading: boolean,
 ) {
   if (isAuthLoading || !user) {
@@ -21,6 +23,7 @@ export function getContentPermissions(
       canEdit: false,
       canSchedule: false,
       canPublish: false,
+      canUnschedule: false,
       hasEditAccessByRole: false,
       hasScheduleAccessByRole: false,
       hasPublishAccessByRole: false,
@@ -30,7 +33,7 @@ export function getContentPermissions(
     };
   }
 
-  const isOwnerOrAdmin = user.role === "owner" || user.role === "admin";
+  const isOwnerOrAdmin = user.role === "platform_owner" || user.agencyRole === "agency_admin";
   const isAssignedDesigner = data.assignedDesigner?.id === user.id;
   const isAssignedEditor = data.assignedEditor?.id === user.id;
   const isEditorWithMutationRights =
@@ -47,7 +50,7 @@ export function getContentPermissions(
   const canSubmitForReview = isEditableStatus && hasEditAccessByRole;
   const canModerateReview =
     data.status === "in_review" &&
-    (user.role === "owner" || user.role === "admin" || user.role === "client");
+    (user.role === "platform_owner" || user.agencyRole === "agency_admin" || user.role === "client");
 
   return {
     canComment: true,
@@ -57,6 +60,7 @@ export function getContentPermissions(
     canEdit: isEditableStatus && hasEditAccessByRole,
     canSchedule: isSchedulableStatus && hasScheduleAccessByRole,
     canPublish: isPublishableStatus && hasPublishAccessByRole,
+    canUnschedule: data.status === "scheduled" && hasScheduleAccessByRole,
     hasEditAccessByRole,
     hasScheduleAccessByRole,
     hasPublishAccessByRole,

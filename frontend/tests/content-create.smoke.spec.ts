@@ -64,7 +64,7 @@ test("designer can create a draft with locked self-assignment", async ({
     session.page.getByRole("heading", { name: "Draft Setup" }),
   ).toBeVisible();
   await expect(session.page.locator("#assignedDesignerId")).toHaveCount(0);
-  await expect(session.page.getByRole("main").getByText("Deniz Designer")).toBeVisible();
+  await expect(session.page.getByRole("main").getByText("Deniz Şahin")).toBeVisible();
   await expect(
     session.page.getByText("Your role assigns the designer field to you."),
   ).toBeVisible();
@@ -88,7 +88,7 @@ test("designer can create a draft with locked self-assignment", async ({
     .filter({
       has: session.page.getByRole("heading", { name: "Workflow Context" }),
     });
-  await expect(workflowSection.getByText("Deniz Designer")).toBeVisible();
+  await expect(workflowSection.getByText("Deniz Şahin")).toBeVisible();
 
   await session.context.close();
 });

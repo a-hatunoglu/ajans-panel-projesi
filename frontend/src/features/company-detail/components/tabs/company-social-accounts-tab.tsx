@@ -2,12 +2,18 @@
 
 import { useState, useCallback } from "react";
 import { Plus, Share2 } from "lucide-react";
-import { useAuth } from "@/providers/auth-provider";
+import dynamic from "next/dynamic";
+import { useAuth } from "@/providers/auth-provider"
+import { canManageCompanies } from "@/lib/roles";;
 import { useCompanySocialAccounts } from "../../api/queries";
 import { CompanyInlineStatePanel } from "../company-inline-state-panel";
 import { CompanySocialAccountListItem } from "../company-social-account-list-item";
-import { CreateSocialAccountDialog } from "../create-social-account-dialog";
 import { useI18n } from "@/i18n/provider";
+
+const CreateSocialAccountDialog = dynamic(
+  () => import("../create-social-account-dialog").then((m) => m.CreateSocialAccountDialog),
+  { ssr: false }
+);
 
 interface CompanySocialAccountsTabProps {
   companyId: string;
@@ -19,7 +25,7 @@ export function CompanySocialAccountsTab({
   const { t } = useI18n();
   const { user } = useAuth();
   const role = user?.role || "guest";
-  const canCreate = ["owner", "admin"].includes(role);
+  const canCreate = canManageCompanies(user?.role, user?.agencyRole ?? undefined);
   const { data, isLoading, isError } = useCompanySocialAccounts(companyId);
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false);

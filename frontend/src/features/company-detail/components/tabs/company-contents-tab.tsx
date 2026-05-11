@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import { useAuth } from "@/providers/auth-provider";
+
+import { useCompanyRoles } from "@/hooks/use-company-roles";
 import { useCompanyContents } from "../../api/queries";
 import { CompanyInlineStatePanel } from "../company-inline-state-panel";
 import { CompanyContentsListItem } from "../company-contents-list-item";
@@ -16,9 +17,8 @@ interface CompanyContentsTabProps {
 
 export function CompanyContentsTab({ companyId }: CompanyContentsTabProps) {
   const { t } = useI18n();
-  const { user } = useAuth();
-  const role = user?.role || "guest";
-  const canCreate = ["owner", "admin", "editor", "designer"].includes(role);
+  const { hasRole, isOwnerOrAdmin } = useCompanyRoles(companyId);
+  const canCreate = isOwnerOrAdmin || hasRole("editor") || hasRole("designer");
   const [page, setPage] = useState(1);
   const { data, isLoading, isFetching, isError } = useCompanyContents(companyId, page);
 

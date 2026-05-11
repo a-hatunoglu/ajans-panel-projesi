@@ -16,7 +16,7 @@ const BASE_COOKIE_OPTIONS: Pick<CookieOptions, 'httpOnly' | 'secure' | 'sameSite
 
 const ACCESS_COOKIE_OPTIONS: CookieOptions = {
   ...BASE_COOKIE_OPTIONS,
-  path: env.API_PREFIX,
+  path: '/',
   maxAge: ACCESS_TOKEN_TTL_MS,
 };
 
@@ -92,7 +92,7 @@ export async function logout(req: Request, res: Response, next: NextFunction) {
 
     res.clearCookie(ACCESS_TOKEN_COOKIE_NAME, {
       ...BASE_COOKIE_OPTIONS,
-      path: env.API_PREFIX,
+      path: '/',
     });
     res.clearCookie(REFRESH_TOKEN_COOKIE_NAME, {
       ...BASE_COOKIE_OPTIONS,

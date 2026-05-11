@@ -3,8 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import { validate } from '../../middleware/validate';
 import { authenticate } from '../../middleware/authenticate';
-import { authorize } from '../../middleware/authorize';
-import { UserRole } from '../../shared/types/enums';
+import { agencyScope } from '../../middleware/agency-scope';
 import {
   createContentSchema,
   updateContentSchema,
@@ -17,21 +16,15 @@ import {
   companyIdParamSchema,
   calendarQuerySchema,
   contentsListQuerySchema,
+  presignedUrlSchema,
+  confirmMediaSchema,
 } from './contents.schema';
+import { ALLOWED_MIME_MAP, VIDEO_MAX_BYTES } from '../../shared/constants/media';
 import * as contentsController from './contents.controller';
-
-const ALLOWED_MIME_MAP: Record<string, string[]> = {
-  'image/jpeg': ['.jpg', '.jpeg'],
-  'image/png': ['.png'],
-  'image/webp': ['.webp'],
-  'image/gif': ['.gif'],
-  'video/mp4': ['.mp4'],
-  'video/webm': ['.webm'],
-};
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
+  limits: { fileSize: VIDEO_MAX_BYTES }, // Global ceiling = video max
   fileFilter: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
     const allowedExts = ALLOWED_MIME_MAP[file.mimetype];
@@ -50,15 +43,25 @@ const upload = multer({
   },
 });
 
+import { companyAccess } from '../../middleware/company-access';
+
 // Company-scoped routes (/companies/:companyId/contents)
 
 const companyRouter = Router({ mergeParams: true });
 companyRouter.use(authenticate);
+companyRouter.use(agencyScope());
+companyRouter.use(companyAccess('companyId'));
 
 companyRouter.get(
   '/calendar',
   validate({ params: companyIdParamSchema, query: calendarQuerySchema }),
   contentsController.getCalendar,
+);
+
+companyRouter.get(
+  '/workflow-snapshot',
+  validate({ params: companyIdParamSchema }),
+  contentsController.getWorkflowSnapshot,
 );
 
 companyRouter.get(
@@ -69,7 +72,6 @@ companyRouter.get(
 
 companyRouter.post(
   '/',
-  authorize(UserRole.OWNER, UserRole.ADMIN, UserRole.EDITOR, UserRole.DESIGNER),
   validate({ params: companyIdParamSchema, body: createContentSchema }),
   contentsController.create,
 );
@@ -78,6 +80,7 @@ companyRouter.post(
 
 const directRouter = Router();
 directRouter.use(authenticate);
+directRouter.use(agencyScope());
 
 directRouter.get(
   '/',
@@ -99,14 +102,12 @@ directRouter.get(
 
 directRouter.put(
   '/:id',
-  authorize(UserRole.OWNER, UserRole.ADMIN, UserRole.EDITOR, UserRole.DESIGNER),
   validate({ params: contentIdParamSchema, body: updateContentSchema }),
   contentsController.update,
 );
 
 directRouter.delete(
   '/:id',
-  authorize(UserRole.OWNER, UserRole.ADMIN, UserRole.EDITOR, UserRole.DESIGNER),
   validate({ params: contentIdParamSchema }),
   contentsController.softDelete,
 );
@@ -119,21 +120,18 @@ directRouter.put(
 
 directRouter.put(
   '/:id/assign',
-  authorize(UserRole.OWNER, UserRole.ADMIN, UserRole.EDITOR),
   validate({ params: contentIdParamSchema, body: assignContentSchema }),
   contentsController.assign,
 );
 
 directRouter.post(
   '/:id/approve',
-  authorize(UserRole.OWNER, UserRole.ADMIN, UserRole.CLIENT),
   validate({ params: contentIdParamSchema, body: approveRejectSchema }),
   contentsController.approve,
 );
 
 directRouter.post(
   '/:id/reject',
-  authorize(UserRole.OWNER, UserRole.ADMIN, UserRole.CLIENT),
   validate({ params: contentIdParamSchema, body: rejectSchema }),
   contentsController.reject,
 );
@@ -157,16 +155,27 @@ directRouter.post(
 );
 
 directRouter.post(
+  '/:id/media/presigned-url',
+  validate({ params: contentIdParamSchema, body: presignedUrlSchema }),
+  contentsController.getPresignedUrl,
+);
+
+
+directRouter.post(
   '/:id/media',
-  authorize(UserRole.OWNER, UserRole.ADMIN, UserRole.EDITOR, UserRole.DESIGNER),
   validate({ params: contentIdParamSchema }),
   upload.single('file'),
   contentsController.addMedia,
 );
 
+directRouter.post(
+  '/:id/media/confirm',
+  validate({ params: contentIdParamSchema, body: confirmMediaSchema }),
+  contentsController.confirmMedia,
+);
+
 directRouter.delete(
   '/:id/media/:mediaId',
-  authorize(UserRole.OWNER, UserRole.ADMIN, UserRole.EDITOR, UserRole.DESIGNER),
   validate({ params: contentIdParamSchema }),
   contentsController.removeMedia,
 );

@@ -1,12 +1,20 @@
 import 'dotenv/config';
 import bcrypt from 'bcryptjs';
 import { PrismaClient } from '@prisma/client';
-import { ContentStatus, UserRole } from '../src/shared/types/enums';
+import { ContentStatus, UserRole, CompanyRole } from '../src/shared/types/enums';
 
 const prisma = new PrismaClient();
 
 const PASSWORD = 'LocalDev123!';
 const PASSWORD_SALT_ROUNDS = 12;
+
+// ── Dynamic schedule dates (seed her çalıştığında ileri tarihli olsun) ──
+function daysFromNow(days: number, hour = 10, minute = 0): Date {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  d.setHours(hour, minute, 0, 0);
+  return d;
+}
 
 const FIXTURE = {
   company: {
@@ -48,6 +56,7 @@ const FIXTURE = {
       firstName: 'Enes',
       lastName: 'Koç',
       role: UserRole.OWNER,
+      fixtureKey: 'owner' as const,
     },
     {
       id: '12a0ad6e-3d92-4e88-a239-167a3bfcfdb9',
@@ -55,27 +64,34 @@ const FIXTURE = {
       firstName: 'Ayla',
       lastName: 'Yılmaz',
       role: UserRole.ADMIN,
+      fixtureKey: 'admin' as const,
     },
     {
       id: 'e62e0a6a-aa61-4fb9-9df7-d6fcb9639e90',
       email: 'ece.editor@test.com',
       firstName: 'Ece',
       lastName: 'Aydın',
-      role: UserRole.EDITOR,
+      role: UserRole.MEMBER,
+      fixtureKey: 'editor' as const,
+      companyRole: CompanyRole.EDITOR,
     },
     {
       id: 'd8d3a00f-02d2-4587-b494-25ac7b3b65d9',
       email: 'deniz.designer@test.com',
       firstName: 'Deniz',
       lastName: 'Şahin',
-      role: UserRole.DESIGNER,
+      role: UserRole.MEMBER,
+      fixtureKey: 'designer' as const,
+      companyRole: CompanyRole.DESIGNER,
     },
     {
       id: 'd8347798-0116-4dce-88e3-935e6023bfd9',
       email: 'cem.client@test.com',
       firstName: 'Cem',
       lastName: 'Yıldız',
-      role: UserRole.CLIENT,
+      role: UserRole.MEMBER,
+      fixtureKey: 'client' as const,
+      companyRole: CompanyRole.CLIENT,
     },
   ],
   contents: [
@@ -131,7 +147,7 @@ const FIXTURE = {
       createdAt: new Date('2026-04-01T09:00:00.000Z'),
       versionId: '91b77519-7d46-42d7-8b7a-f59cbec40005',
       approvedAt: new Date('2026-04-01T10:00:00.000Z'),
-      scheduledAt: new Date('2026-04-08T12:30:00.000Z'),
+      scheduledAt: daysFromNow(2, 12, 30),
       publishedAt: null,
     },
     {
@@ -177,7 +193,7 @@ const FIXTURE = {
       createdAt: new Date('2026-04-04T14:00:00.000Z'),
       versionId: 'f1a2b3c4-d5e6-4f78-9a0b-c1d2e3f50003',
       approvedAt: new Date('2026-04-05T09:00:00.000Z'),
-      scheduledAt: new Date('2026-04-12T10:00:00.000Z'),
+      scheduledAt: daysFromNow(4, 10, 0),
       publishedAt: null,
     },
   ],
@@ -247,6 +263,7 @@ async function ensureUser(user: (typeof FIXTURE.users)[number], passwordHash: st
         isActive: true,
         deletedAt: null,
         passwordHash,
+        hasCompletedOnboarding: true,
         inviteToken: null,
         inviteExpiresAt: null,
         resetToken: null,
@@ -264,13 +281,44 @@ async function ensureUser(user: (typeof FIXTURE.users)[number], passwordHash: st
       lastName: user.lastName,
       role: user.role,
       isActive: true,
+      hasCompletedOnboarding: true,
       passwordHash,
     },
     select: { id: true, email: true, role: true },
   });
 }
 
-async function ensureCompany() {
+async function ensureAgency() {
+  const existing = await prisma.agency.findUnique({
+    where: { slug: 'main-agency' },
+    select: { id: true },
+  });
+
+  if (existing) {
+    return prisma.agency.update({
+      where: { id: existing.id },
+      data: {
+        name: 'Main Agency',
+        slug: 'main-agency',
+        isActive: true,
+        deletedAt: null,
+      },
+      select: { id: true, name: true, slug: true },
+    });
+  }
+
+  return prisma.agency.create({
+    data: {
+      id: 'f87a8b41-dbba-45de-9858-a53ec419f563',
+      name: 'Main Agency',
+      slug: 'main-agency',
+      isActive: true,
+    },
+    select: { id: true, name: true, slug: true },
+  });
+}
+
+async function ensureCompany(agencyId: string) {
   const existing = await prisma.company.findUnique({
     where: { slug: FIXTURE.company.slug },
     select: { id: true },
@@ -280,6 +328,7 @@ async function ensureCompany() {
     return prisma.company.update({
       where: { id: existing.id },
       data: {
+        agencyId,
         name: FIXTURE.company.name,
         slug: FIXTURE.company.slug,
         email: FIXTURE.company.email,
@@ -296,6 +345,7 @@ async function ensureCompany() {
   return prisma.company.create({
     data: {
       id: FIXTURE.company.id,
+      agencyId,
       name: FIXTURE.company.name,
       slug: FIXTURE.company.slug,
       email: FIXTURE.company.email,
@@ -369,21 +419,37 @@ async function ensureSocialAccount(companyId: string) {
   });
 }
 
-async function ensureMemberships(companyId: string, userIds: string[]) {
-  for (const userId of userIds) {
-    await prisma.companyUser.upsert({
+async function ensureMemberships(companyId: string, members: Array<{ userId: string; companyRole?: string }>) {
+  for (const member of members) {
+    const cu = await prisma.companyUser.upsert({
       where: {
         companyId_userId: {
           companyId,
-          userId,
+          userId: member.userId,
         },
       },
       update: {},
       create: {
         companyId,
-        userId,
+        userId: member.userId,
       },
     });
+
+    if (member.companyRole) {
+      await prisma.companyUserRole.upsert({
+        where: {
+          companyUserId_role: {
+            companyUserId: cu.id,
+            role: member.companyRole,
+          },
+        },
+        update: {},
+        create: {
+          companyUserId: cu.id,
+          role: member.companyRole,
+        },
+      });
+    }
   }
 }
 
@@ -473,7 +539,7 @@ async function ensureQaContents(params: {
   }
 }
 
-async function ensureCompany2() {
+async function ensureCompany2(agencyId: string) {
   const existing = await prisma.company.findUnique({
     where: { slug: FIXTURE.company2.slug },
     select: { id: true },
@@ -483,6 +549,7 @@ async function ensureCompany2() {
     return prisma.company.update({
       where: { id: existing.id },
       data: {
+        agencyId,
         name: FIXTURE.company2.name,
         slug: FIXTURE.company2.slug,
         email: FIXTURE.company2.email,
@@ -499,6 +566,7 @@ async function ensureCompany2() {
   return prisma.company.create({
     data: {
       id: FIXTURE.company2.id,
+      agencyId,
       name: FIXTURE.company2.name,
       slug: FIXTURE.company2.slug,
       email: FIXTURE.company2.email,
@@ -889,16 +957,23 @@ async function main() {
     users.push(await ensureUser(user, passwordHash));
   }
 
-  const usersByRole = Object.fromEntries(users.map((user) => [user.role, user])) as Record<UserRole, (typeof users)[number]>;
+  const usersByRole = Object.fromEntries(
+    FIXTURE.users.map((fixtureUser, i) => [fixtureUser.fixtureKey, users[i]])
+  ) as Record<string, (typeof users)[number]>;
+
+  const agency = await ensureAgency();
 
   // ── Company 1: Atlas Local Dev ──
-  const company = await ensureCompany();
+  const company = await ensureCompany(agency.id);
   const socialAccount = await ensureSocialAccount(company.id);
 
-  await ensureMemberships(
-    company.id,
-    users.map((user) => user.id),
-  );
+  await ensureMemberships(company.id, [
+    { userId: usersByRole.owner.id },
+    { userId: usersByRole.admin.id },
+    { userId: usersByRole.editor.id, companyRole: CompanyRole.EDITOR },
+    { userId: usersByRole.designer.id, companyRole: CompanyRole.DESIGNER },
+    { userId: usersByRole.client.id, companyRole: CompanyRole.CLIENT },
+  ]);
 
   await archiveDuplicateQaContents(company.id);
 
@@ -916,17 +991,16 @@ async function main() {
   });
 
   // ── Company 2: Momentum Digital ──
-  const company2 = await ensureCompany2();
+  const company2 = await ensureCompany2(agency.id);
   const socialAccount2 = await ensureSocialAccount2(company2.id);
 
   // Only owner, admin, editor, designer — not client
-  const company2UserIds = [
-    usersByRole.owner.id,
-    usersByRole.admin.id,
-    usersByRole.editor.id,
-    usersByRole.designer.id,
-  ];
-  await ensureMemberships(company2.id, company2UserIds);
+  await ensureMemberships(company2.id, [
+    { userId: usersByRole.owner.id },
+    { userId: usersByRole.admin.id },
+    { userId: usersByRole.editor.id, companyRole: CompanyRole.EDITOR },
+    { userId: usersByRole.designer.id, companyRole: CompanyRole.DESIGNER },
+  ]);
 
   await archiveDuplicateQaContents(company2.id);
   await ensureQaContents2({

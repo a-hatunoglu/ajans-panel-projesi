@@ -8,6 +8,7 @@ import { EditCompanyDialog } from "../edit-company-dialog";
 import { useUiCopy } from "@/lib/copy";
 import { useLabels } from "@/lib/labels";
 import { useAuth } from "@/providers/auth-provider";
+import { canManageCompanies } from "@/lib/roles";
 import { useI18n } from "@/i18n/provider";
 
 function DetailRow({
@@ -31,7 +32,7 @@ export function OverviewTab({ data }: { data: CompanyDetailData }) {
   const { user } = useAuth();
   const { getCompanyStatusLabel } = useLabels();
   const notProvided = uiCopy.notProvided;
-  const canManage = ["owner", "admin"].includes(user?.role || "");
+  const canManage = canManageCompanies(user?.role, user?.agencyRole ?? undefined);
   const [editOpen, setEditOpen] = useState(false);
 
   return (

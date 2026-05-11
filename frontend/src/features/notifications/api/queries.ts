@@ -49,6 +49,7 @@ export function useNotifications(
 
   return useQuery({
     queryKey: ["notifications", isRead === undefined ? "all" : isRead ? "read" : "unread", page, perPage],
+    staleTime: 15_000, // 15s — WebSocket handles real-time, this covers page revisit freshness
     placeholderData: (previousData) => previousData,
     queryFn: async (): Promise<NotificationsListData> => {
       const [notificationsResponse, unreadCountResponse] = await Promise.all([
@@ -75,6 +76,7 @@ export function useUnreadCount(enabled = true) {
   return useQuery({
     queryKey: ["notifications-unread-count"],
     enabled,
+    staleTime: 10_000, // 10s — badge count should feel responsive
     refetchInterval: 60_000,
     queryFn: async (): Promise<number> => {
       const response = await apiClient<UnreadCountResponse>(

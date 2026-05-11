@@ -80,10 +80,22 @@ export const apiClient = async <T>(endpoint: string, config: FetchConfig = {}): 
     url += `?${searchParams.toString()}`;
   }
 
+  const isFormData = typeof FormData !== "undefined" && customConfig.body instanceof FormData;
+
+  // Inject X-Agency-Id header for platform owner impersonation
+  const agencyHeaders: Record<string, string> = {};
+  if (typeof window !== "undefined") {
+    const activeAgencyId = localStorage.getItem("agencyos-active-agency-id");
+    if (activeAgencyId) {
+      agencyHeaders["X-Agency-Id"] = activeAgencyId;
+    }
+  }
+
   const response = await fetch(url, {
     ...customConfig,
     headers: {
-      "Content-Type": "application/json",
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
+      ...agencyHeaders,
       ...headers,
     },
     credentials: "include",

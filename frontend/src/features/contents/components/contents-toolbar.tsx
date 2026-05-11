@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, Download } from "lucide-react";
 import Link from "next/link";
 import type { ChangeEvent } from "react";
 import type { ContentStatus, ContentsListSort } from "../types";
@@ -17,6 +17,7 @@ interface ContentsToolbarProps {
   onSearchChange: (value: string) => void;
   onStatusChange: (value: ContentsToolbarStatusValue) => void;
   onSortChange: (value: ContentsListSort) => void;
+  onExport?: () => void;
 }
 
 const STATUS_OPTIONS: ContentStatus[] = [
@@ -36,6 +37,7 @@ export function ContentsToolbar({
   onSearchChange,
   onStatusChange,
   onSortChange,
+  onExport,
 }: ContentsToolbarProps) {
   const { t } = useI18n();
   const { getContentStatusLabel } = useLabels();
@@ -56,13 +58,13 @@ export function ContentsToolbar({
     <div className="mb-4 flex flex-col gap-3 py-4 lg:flex-row lg:items-center lg:justify-between">
       <div className="flex w-full flex-col gap-2 md:flex-row md:items-center">
         <div className="relative w-full md:max-w-sm">
-          <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-zinc-500" />
+          <Search className="pointer-events-none absolute left-3 top-3 md:top-2.5 h-4 w-4 text-zinc-500" />
           <input
             type="search"
             value={searchValue}
             onChange={handleSearchChange}
             placeholder={t("contents.toolbar.searchPlaceholder")}
-            className="h-9 w-full rounded-md border border-zinc-800 bg-zinc-900/50 pl-9 pr-3 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-primary"
+            className="h-11 md:h-9 w-full rounded-md border border-zinc-800 bg-zinc-900/50 pl-9 pr-3 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-primary"
             aria-label={t("contents.toolbar.search")}
           />
         </div>
@@ -70,7 +72,7 @@ export function ContentsToolbar({
         <select
           value={statusValue}
           onChange={handleStatusChange}
-          className="h-9 rounded-md border border-zinc-800 bg-zinc-900/50 px-3 text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-primary md:w-44"
+          className="h-11 md:h-9 rounded-md border border-zinc-800 bg-zinc-900/50 px-3 text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-primary md:w-44"
           aria-label={t("contents.toolbar.status")}
         >
           <option value="all">{t("contents.toolbar.allStatuses")}</option>
@@ -84,7 +86,7 @@ export function ContentsToolbar({
         <select
           value={sortValue}
           onChange={handleSortChange}
-          className="h-9 rounded-md border border-zinc-800 bg-zinc-900/50 px-3 text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-primary md:w-44"
+          className="h-11 md:h-9 rounded-md border border-zinc-800 bg-zinc-900/50 px-3 text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-primary md:w-44"
           aria-label={t("contents.toolbar.sort")}
         >
           <option value="created_desc">{t("contents.toolbar.sortNewest")}</option>
@@ -92,15 +94,29 @@ export function ContentsToolbar({
         </select>
       </div>
 
-      {canCreate && (
-        <Link
-          href="/app/contents/new"
-          className="inline-flex h-9 shrink-0 items-center gap-2 rounded-md border border-white/10 bg-zinc-100 px-4 text-sm font-medium text-zinc-950 transition-colors hover:bg-white"
-        >
-          <Plus className="h-4 w-4" />
-          {t("contents.toolbar.createContent")}
-        </Link>
-      )}
+      <div className="flex items-center gap-2">
+        {onExport && (
+          <button
+            type="button"
+            onClick={onExport}
+            className="inline-flex h-11 md:h-9 shrink-0 items-center gap-2 rounded-md border border-zinc-800 bg-zinc-900/50 px-3 text-sm font-medium text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-white"
+            title={t("contents.toolbar.exportCsv")}
+          >
+            <Download className="h-4 w-4" />
+            <span className="hidden sm:inline">{t("contents.toolbar.exportCsv")}</span>
+          </button>
+        )}
+
+        {canCreate && (
+          <Link
+            href="/app/contents/new"
+            className="inline-flex h-11 md:h-9 shrink-0 items-center gap-2 rounded-md border border-white/10 bg-zinc-100 px-4 text-sm font-medium text-zinc-950 transition-colors hover:bg-white"
+          >
+            <Plus className="h-4 w-4" />
+            {t("contents.toolbar.createContent")}
+          </Link>
+        )}
+      </div>
     </div>
   );
 }

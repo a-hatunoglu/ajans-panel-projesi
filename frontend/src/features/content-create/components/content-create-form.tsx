@@ -11,6 +11,7 @@ import {
   useCreateCompanyMemberOptions,
   useCreateSocialAccountOptions,
 } from "../api/queries";
+import { useCompanyRoles } from "@/hooks/use-company-roles";
 import { createContentCreateSchema } from "../schema";
 import type {
   ContentCreateCompanyOption,
@@ -20,6 +21,7 @@ import type {
 } from "../types";
 import { useLabels } from "@/lib/labels";
 import { useI18n } from "@/i18n/provider";
+import { cn } from "@/lib/utils";
 
 interface ContentCreateFormProps {
   companies: ContentCreateCompanyOption[];
@@ -108,6 +110,11 @@ export function ContentCreateForm({
 
   const selectedCompanyId = watch("companyId");
   const selectedDesignerId = watch("assignedDesignerId");
+  
+  const { companyRoles } = useCompanyRoles(selectedCompanyId);
+  const isDesignerRole = companyRoles.includes("designer");
+  const isEditorRole = companyRoles.includes("editor");
+
   const socialAccountsQuery = useCreateSocialAccountOptions(selectedCompanyId, Boolean(selectedCompanyId));
   const membersQuery = useCreateCompanyMemberOptions(selectedCompanyId, Boolean(selectedCompanyId));
   const socialAccounts = useMemo(
@@ -119,14 +126,15 @@ export function ContentCreateForm({
     [membersQuery.data],
   );
   const designerOptions = useMemo(
-    () => members.filter((member) => member.isActive && member.role === "designer"),
+    () => members.filter((member) => member.isActive && member.roles && member.roles.includes("designer")),
     [members],
   );
   const editorOptions = useMemo(
-    () => members.filter((member) => member.isActive && member.role === "editor"),
+    () => members.filter((member) => member.isActive && member.roles && member.roles.includes("editor")),
     [members],
   );
-  const lockedDesigner = currentUser.role === "designer";
+  
+  
   const selectedDesigner = designerOptions.find(
     (option) => option.id === selectedDesignerId,
   ) ?? null;
@@ -190,16 +198,13 @@ export function ContentCreateForm({
     const selfDesigner = designerOptions.find((option) => option.id === currentUser.id) ?? null;
     const selfEditor = editorOptions.find((option) => option.id === currentUser.id) ?? null;
 
-    if (lockedDesigner) {
-      setValue("assignedDesignerId", selfDesigner?.id ?? "", { shouldValidate: true });
-    } else {
-      if (currentDesignerId && !designerOptions.some((option) => option.id === currentDesignerId)) {
-        setValue("assignedDesignerId", "", { shouldValidate: true });
-      }
-
-      if (!currentDesignerId && designerOptions.length === 1) {
-        setValue("assignedDesignerId", designerOptions[0].id, { shouldValidate: true });
-      }
+    // If user has designer role and no designer is selected, prefill with self
+    if (isDesignerRole && !currentDesignerId && selfDesigner) {
+      setValue("assignedDesignerId", selfDesigner.id, { shouldValidate: true });
+    } else if (currentDesignerId && !designerOptions.some((option) => option.id === currentDesignerId)) {
+      setValue("assignedDesignerId", "", { shouldValidate: true });
+    } else if (!currentDesignerId && designerOptions.length === 1) {
+      setValue("assignedDesignerId", designerOptions[0].id, { shouldValidate: true });
     }
 
     if (currentEditorId && !editorOptions.some((option) => option.id === currentEditorId)) {
@@ -207,7 +212,7 @@ export function ContentCreateForm({
     }
 
     if (!currentEditorId) {
-      if (currentUser.role === "editor" && selfEditor) {
+      if (isEditorRole && selfEditor) {
         setValue("assignedEditorId", selfEditor.id, { shouldValidate: true });
       } else if (editorOptions.length === 1) {
         setValue("assignedEditorId", editorOptions[0].id, { shouldValidate: true });
@@ -215,11 +220,11 @@ export function ContentCreateForm({
     }
   }, [
     currentUser.id,
-    currentUser.role,
     designerOptions,
     editorOptions,
+    isDesignerRole,
+    isEditorRole,
     getValues,
-    lockedDesigner,
     selectedCompanyId,
     setValue,
   ]);
@@ -310,7 +315,10 @@ export function ContentCreateForm({
           </label>
           <select
             id="companyId"
-            className="mt-2 h-10 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 text-sm text-zinc-100 focus:outline-none focus:ring-1 focus:ring-primary"
+            className={cn(
+              "mt-2 h-10 w-full rounded-md border bg-zinc-900 px-3 text-sm text-zinc-100 focus:outline-none focus:ring-1",
+              errors.companyId ? "border-red-500/50 focus:ring-red-500" : "border-zinc-800 focus:ring-primary"
+            )}
             {...register("companyId")}
             disabled={createContentMutation.isPending}
           >
@@ -329,7 +337,10 @@ export function ContentCreateForm({
           </label>
           <select
             id="socialAccountId"
-            className="mt-2 h-10 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 text-sm text-zinc-100 focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
+            className={cn(
+              "mt-2 h-10 w-full rounded-md border bg-zinc-900 px-3 text-sm text-zinc-100 focus:outline-none focus:ring-1 disabled:cursor-not-allowed disabled:opacity-60",
+              errors.socialAccountId ? "border-red-500/50 focus:ring-red-500" : "border-zinc-800 focus:ring-primary"
+            )}
             {...register("socialAccountId")}
             disabled={!selectedCompanyId || socialAccountsQuery.isLoading || createContentMutation.isPending}
           >
@@ -363,7 +374,10 @@ export function ContentCreateForm({
             id="title"
             type="text"
             placeholder={t("contentCreate.form.titlePlaceholder")}
-            className="mt-2 h-10 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-primary"
+            className={cn(
+              "mt-2 h-10 w-full rounded-md border bg-zinc-900 px-3 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-1",
+              errors.title ? "border-red-500/50 focus:ring-red-500" : "border-zinc-800 focus:ring-primary"
+            )}
             {...register("title")}
             disabled={createContentMutation.isPending}
           />
@@ -378,7 +392,10 @@ export function ContentCreateForm({
             id="body"
             rows={8}
             placeholder={t("contentCreate.form.bodyPlaceholder")}
-            className="mt-2 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-3 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-primary"
+            className={cn(
+              "mt-2 w-full rounded-md border bg-zinc-900 px-3 py-3 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-1",
+              errors.body ? "border-red-500/50 focus:ring-red-500" : "border-zinc-800 focus:ring-primary"
+            )}
             {...register("body")}
             disabled={createContentMutation.isPending}
           />
@@ -390,14 +407,12 @@ export function ContentCreateForm({
             {t("contentCreate.form.assignedDesigner")}
           </label>
 
-          {lockedDesigner ? (
-            <div className="mt-2 rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2.5 text-sm text-zinc-100">
-              {selectedDesigner?.name || currentUser.id}
-            </div>
-          ) : (
-            <select
+          <select
               id="assignedDesignerId"
-              className="mt-2 h-10 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 text-sm text-zinc-100 focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
+              className={cn(
+                "mt-2 h-10 w-full rounded-md border bg-zinc-900 px-3 text-sm text-zinc-100 focus:outline-none focus:ring-1 disabled:cursor-not-allowed disabled:opacity-60",
+                errors.assignedDesignerId ? "border-red-500/50 focus:ring-red-500" : "border-zinc-800 focus:ring-primary"
+              )}
               {...register("assignedDesignerId")}
               disabled={!selectedCompanyId || membersQuery.isLoading || createContentMutation.isPending}
             >
@@ -408,11 +423,10 @@ export function ContentCreateForm({
                 </option>
               ))}
             </select>
-          )}
 
           <FieldError message={errors.assignedDesignerId?.message} />
-          {lockedDesigner && (
-            <FieldNote message={t("contentCreate.form.designerLockedHint")} />
+          {isDesignerRole && selectedDesigner?.id === currentUser.id && (
+            <FieldNote message={t("contentCreate.form.designerPrefillHint")} />
           )}
           {designerMessage && (
             <FieldNote message={designerMessage} tone="warning">
@@ -434,7 +448,10 @@ export function ContentCreateForm({
           </label>
           <select
             id="assignedEditorId"
-            className="mt-2 h-10 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 text-sm text-zinc-100 focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-60"
+            className={cn(
+              "mt-2 h-10 w-full rounded-md border bg-zinc-900 px-3 text-sm text-zinc-100 focus:outline-none focus:ring-1 disabled:cursor-not-allowed disabled:opacity-60",
+              errors.assignedEditorId ? "border-red-500/50 focus:ring-red-500" : "border-zinc-800 focus:ring-primary"
+            )}
             {...register("assignedEditorId")}
             disabled={!selectedCompanyId || membersQuery.isLoading || createContentMutation.isPending}
           >
@@ -446,7 +463,7 @@ export function ContentCreateForm({
             ))}
           </select>
           <FieldError message={errors.assignedEditorId?.message} />
-          {currentUser.role === "editor" && !editorMessage && (
+          {isEditorRole && !editorMessage && (
             <FieldNote message={t("contentCreate.form.editorPrefillHint")} />
           )}
           {editorMessage && (
@@ -461,6 +478,22 @@ export function ContentCreateForm({
               ) : null}
             </FieldNote>
           )}
+        </div>
+
+        <div className="md:col-span-2">
+          <label className="text-sm font-medium text-zinc-300" htmlFor="scheduledAt">
+            {t("contentCreate.form.scheduledAt")}
+          </label>
+          <input
+            id="scheduledAt"
+            type="datetime-local"
+            className="mt-2 h-10 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 text-sm text-zinc-100 focus:outline-none focus:ring-1 focus:ring-primary"
+            {...register("scheduledAt")}
+            disabled={createContentMutation.isPending}
+          />
+          <p className="mt-2 text-xs text-zinc-500">
+            {t("contentCreate.form.scheduledAtHint")}
+          </p>
         </div>
       </div>
 

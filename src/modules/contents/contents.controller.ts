@@ -28,6 +28,18 @@ export async function listByCompany(req: Request, res: Response, next: NextFunct
   }
 }
 
+export async function getWorkflowSnapshot(req: Request, res: Response, next: NextFunction) {
+  try {
+    const snapshot = await contentsService.getWorkflowSnapshot(
+      req.params.companyId as string,
+      getActor(req),
+    );
+    res.json({ success: true, data: snapshot });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function create(req: Request, res: Response, next: NextFunction) {
   try {
     const content = await contentsService.create(
@@ -167,11 +179,36 @@ export async function addComment(req: Request, res: Response, next: NextFunction
   }
 }
 
+export async function getPresignedUrl(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { filename, mimetype } = req.body;
+    // Actor permission is verified via the route middleware, similar to addMedia.
+    // For a real app, we should check `assertMutationRights` in the service.
+    const result = await contentsService.getPresignedUrl(
+      req.params.id as string,
+      filename,
+      mimetype,
+      getActor(req)
+    );
+    res.json({ success: true, data: result });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function addMedia(req: Request, res: Response, next: NextFunction) {
   try {
     if (!req.file) {
       throw new Error('Dosya bulunamadı.');
     }
+
+    // Type-specific file size enforcement
+    const isImage = req.file.mimetype.startsWith('image/');
+    const IMAGE_LIMIT = 10 * 1024 * 1024; // 10MB
+    if (isImage && req.file.size > IMAGE_LIMIT) {
+      throw new Error('Görsel dosyaları en fazla 10MB olabilir.');
+    }
+
     const media = await contentsService.addMedia(
       req.params.id as string,
       req.file,
@@ -182,6 +219,21 @@ export async function addMedia(req: Request, res: Response, next: NextFunction) 
     next(err);
   }
 }
+
+export async function confirmMedia(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { url, fileType, sizeBytes } = req.body;
+    const media = await contentsService.confirmMedia(
+      req.params.id as string,
+      { url, fileType, sizeBytes },
+      getActor(req)
+    );
+    res.status(201).json({ success: true, data: { media } });
+  } catch (err) {
+    next(err);
+  }
+}
+
 
 export async function removeMedia(req: Request, res: Response, next: NextFunction) {
   try {

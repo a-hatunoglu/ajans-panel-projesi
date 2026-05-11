@@ -29,13 +29,11 @@ export function useScheduleContentMutation() {
           queryKey: ["content-detail", variables.contentId],
         }),
         queryClient.invalidateQueries({ queryKey: ["contents"] }),
-        queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
         queryClient.invalidateQueries({ queryKey: ["calendar"] }),
+        queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
         queryClient.invalidateQueries({
           queryKey: ["company-workflow-snapshot", variables.companyId],
         }),
-        queryClient.invalidateQueries({ queryKey: ["notifications"] }),
-        queryClient.invalidateQueries({ queryKey: ["activity-logs"] }),
       ]);
     },
   });

@@ -1,6 +1,7 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { User } from "@/providers/auth-provider";
+import { settingsKeys } from "./keys";
 
 type UpdateProfilePayload = {
   firstName: string;
@@ -56,3 +57,66 @@ export function useChangePasswordMutation() {
   });
 }
 
+// ─── System User Mutations ────────────────────────────────────
+
+type UpdateSystemUserPayload = {
+  firstName?: string;
+  lastName?: string;
+  role?: string;
+  isActive?: boolean;
+};
+
+type UpdateSystemUserResponse = {
+  success: boolean;
+  data: { user: User };
+};
+
+export function useUpdateSystemUserMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      ...payload
+    }: UpdateSystemUserPayload & { userId: string }) => {
+      const response = await apiClient<UpdateSystemUserResponse>(`/users/${userId}`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: settingsKeys.systemUsers });
+    },
+  });
+}
+
+type InviteSystemUserPayload = {
+  firstName: string;
+  lastName: string;
+  email?: string;
+  role: string;
+  tempPassword?: string;
+};
+
+type InviteSystemUserResponse = {
+  success: boolean;
+  data: { user: User };
+};
+
+export function useInviteSystemUserMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: InviteSystemUserPayload) => {
+      const response = await apiClient<InviteSystemUserResponse>("/users/invite", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: settingsKeys.systemUsers });
+    },
+  });
+}

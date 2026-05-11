@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '../../config/database';
 import { ForbiddenError, NotFoundError } from '../../shared/errors/app-error';
-import { UserRole } from '../../shared/types/enums';
+import { UserRole, CompanyRole } from '../../shared/types/enums';
 import { parsePagination, createPaginationMeta } from '../../shared/utils/pagination';
 import { assertCompanyAccess } from '../../shared/helpers/access-control';
 import { logActivity } from '../activity-logs/activity-logs.service';
@@ -24,15 +24,19 @@ type GlobalPaymentRow = {
 };
 
 export async function listGlobal(actor: ActorContext, query: PaymentsListQuery) {
-  if (actor.role !== UserRole.OWNER && actor.role !== UserRole.ADMIN) {
+  const isPlatformOwner = actor.role === UserRole.PLATFORM_OWNER;
+  const isAgencyAdmin = actor.agencyRole === 'agency_admin';
+  if (!isPlatformOwner && !isAgencyAdmin) {
     throw new ForbiddenError('Ödemeleri görüntüleme yetkiniz yok.');
   }
 
   const pagination = parsePagination(query);
   const where: Prisma.PaymentWhereInput = {
+    deletedAt: null,
     company: {
       is: {
         deletedAt: null,
+        ...(isPlatformOwner ? {} : { agencyId: actor.agencyId ?? undefined }),
       },
     },
   };
@@ -69,6 +73,8 @@ export async function listGlobal(actor: ActorContext, query: PaymentsListQuery) 
       FROM payments p
       INNER JOIN companies c ON c.id = p.company_id
       WHERE c.deleted_at IS NULL
+      AND p.deleted_at IS NULL
+      ${!isPlatformOwner && actor.agencyId ? Prisma.sql`AND c.agency_id = ${actor.agencyId}::uuid` : Prisma.empty}
       ${statusFilter}
       ${companyFilter}
       ORDER BY
@@ -104,8 +110,15 @@ export async function listGlobal(actor: ActorContext, query: PaymentsListQuery) 
 }
 
 export async function listByCompany(companyId: string, actor: ActorContext, query: PaymentsListQuery) {
-  if (actor.role === UserRole.EDITOR || actor.role === UserRole.DESIGNER) {
-    throw new ForbiddenError('Ödemeleri görüntüleme yetkiniz yok.');
+  // Admin/Owner her zaman erişir
+  const isAdmin = actor.role === UserRole.PLATFORM_OWNER || actor.agencyRole === 'agency_admin';
+  if (!isAdmin) {
+    // Sadece operasyonel rolleri olan (editor/designer) kullanıcılar ödeme göremez
+    const roles = actor.companyRoles ?? [];
+    const hasOnlyOperationalRoles = roles.length > 0 && roles.every(r => r === CompanyRole.EDITOR || r === CompanyRole.DESIGNER);
+    if (hasOnlyOperationalRoles) {
+      throw new ForbiddenError('Ödemeleri görüntüleme yetkiniz yok.');
+    }
   }
   
   // They must have access to the company
@@ -113,7 +126,7 @@ export async function listByCompany(companyId: string, actor: ActorContext, quer
 
   const pagination = parsePagination(query);
 
-  const where: Prisma.PaymentWhereInput = { companyId };
+  const where: Prisma.PaymentWhereInput = { companyId, deletedAt: null };
   if (query.status) where.status = query.status;
 
   const [payments, total] = await Promise.all([
@@ -130,7 +143,7 @@ export async function listByCompany(companyId: string, actor: ActorContext, quer
 }
 
 export async function create(companyId: string, data: CreatePaymentInput, actor: ActorContext) {
-  if (actor.role !== UserRole.OWNER && actor.role !== UserRole.ADMIN) {
+  if (actor.role !== UserRole.PLATFORM_OWNER && actor.agencyRole !== 'agency_admin') {
     throw new ForbiddenError('Ödeme kaydı oluşturma yetkiniz yok.');
   }
 
@@ -160,11 +173,11 @@ export async function create(companyId: string, data: CreatePaymentInput, actor:
 }
 
 export async function update(paymentId: string, data: UpdatePaymentInput, actor: ActorContext) {
-  if (actor.role !== UserRole.OWNER && actor.role !== UserRole.ADMIN) {
+  if (actor.role !== UserRole.PLATFORM_OWNER && actor.agencyRole !== 'agency_admin') {
     throw new ForbiddenError('Ödeme kaydı güncelleme yetkiniz yok.');
   }
 
-  const payment = await prisma.payment.findUnique({ where: { id: paymentId } });
+  const payment = await prisma.payment.findFirst({ where: { id: paymentId, deletedAt: null } });
   if (!payment) throw new NotFoundError('Ödeme bulunamadı.');
 
   await assertCompanyAccess(payment.companyId, actor);
@@ -185,11 +198,11 @@ export async function update(paymentId: string, data: UpdatePaymentInput, actor:
 }
 
 export async function changeStatus(paymentId: string, data: ChangePaymentStatusInput, actor: ActorContext) {
-  if (actor.role !== UserRole.OWNER && actor.role !== UserRole.ADMIN) {
+  if (actor.role !== UserRole.PLATFORM_OWNER && actor.agencyRole !== 'agency_admin') {
     throw new ForbiddenError('Ödeme durumu değiştirme yetkiniz yok.');
   }
 
-  const payment = await prisma.payment.findUnique({ where: { id: paymentId } });
+  const payment = await prisma.payment.findFirst({ where: { id: paymentId, deletedAt: null } });
   if (!payment) throw new NotFoundError('Ödeme bulunamadı.');
 
   await assertCompanyAccess(payment.companyId, actor);
@@ -218,19 +231,21 @@ export async function changeStatus(paymentId: string, data: ChangePaymentStatusI
   return updated;
 }
 
-export async function hardDelete(paymentId: string, actor: ActorContext) {
-  if (actor.role !== UserRole.OWNER) {
-    throw new ForbiddenError('Kalıcı silme işlemini sadece Owner yapabilir.');
+export async function softDelete(paymentId: string, actor: ActorContext) {
+  if (actor.role !== UserRole.PLATFORM_OWNER && actor.agencyRole !== 'agency_admin') {
+    throw new ForbiddenError('Ödeme silme yetkiniz yok.');
   }
 
-  const payment = await prisma.payment.findUnique({ where: { id: paymentId } });
+  const payment = await prisma.payment.findFirst({ where: { id: paymentId, deletedAt: null } });
   if (!payment) throw new NotFoundError('Ödeme bulunamadı.');
 
-  await prisma.payment.delete({
-    where: { id: paymentId }
+  await assertCompanyAccess(payment.companyId, actor);
+
+  await prisma.payment.update({
+    where: { id: paymentId },
+    data: { deletedAt: new Date() },
   });
 
-  // Log activity safely because we don't have constraints breaking this log
   await logActivity(actor, {
     action: ActivityAction.PAYMENT_DELETE,
     companyId: payment.companyId,
@@ -238,5 +253,5 @@ export async function hardDelete(paymentId: string, actor: ActorContext) {
     resourceId: payment.id,
   });
 
-  return { message: 'Ödeme kaydı kalıcı olarak silindi.' };
+  return { message: 'Ödeme kaydı silindi.' };
 }

@@ -13,6 +13,7 @@ import type { ContentDetailData } from "@/features/content-detail/types";
 import { useI18n } from "@/i18n/provider";
 import { useLabels } from "@/lib/labels";
 import { useUiCopy } from "@/lib/copy";
+import { cn } from "@/lib/utils";
 
 interface ContentEditFormProps {
   data: ContentDetailData;
@@ -153,7 +154,10 @@ export function ContentEditForm({ data }: ContentEditFormProps) {
             id="title"
             type="text"
             placeholder={t("contentEdit.form.titlePlaceholder")}
-            className="mt-2 h-10 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-primary"
+            className={cn(
+              "mt-2 h-10 w-full rounded-md border bg-zinc-900 px-3 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-1",
+              errors.title ? "border-red-500/50 focus:ring-red-500" : "border-zinc-800 focus:ring-primary"
+            )}
             {...register("title")}
             disabled={updateContentMutation.isPending}
           />
@@ -168,7 +172,10 @@ export function ContentEditForm({ data }: ContentEditFormProps) {
             id="body"
             rows={10}
             placeholder={t("contentEdit.form.bodyPlaceholder")}
-            className="mt-2 w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-3 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-primary"
+            className={cn(
+              "mt-2 w-full rounded-md border bg-zinc-900 px-3 py-3 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-1",
+              errors.body ? "border-red-500/50 focus:ring-red-500" : "border-zinc-800 focus:ring-primary"
+            )}
             {...register("body")}
             disabled={updateContentMutation.isPending}
           />

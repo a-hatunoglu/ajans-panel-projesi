@@ -1,11 +1,15 @@
 import { Router } from 'express';
 import { validate } from '../../middleware/validate';
 import { authenticate } from '../../middleware/authenticate';
+import { authorize } from '../../middleware/authorize';
+import { agencyScope } from '../../middleware/agency-scope';
+import { UserRole, AgencyRole } from '../../shared/types/enums';
 import * as activityLogsController from './activity-logs.controller';
 import { listActivityLogsQuerySchema } from './activity-logs.schema';
 
 const router = Router();
 router.use(authenticate);
+router.use(agencyScope());
 
 // GET /activity-logs/me
 router.get(
@@ -17,6 +21,7 @@ router.get(
 // GET /activity-logs
 router.get(
   '/',
+  authorize(UserRole.PLATFORM_OWNER, AgencyRole.AGENCY_ADMIN),
   validate({ query: listActivityLogsQuerySchema }),
   activityLogsController.listGlobal
 );

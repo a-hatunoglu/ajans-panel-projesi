@@ -31,7 +31,7 @@ export function NotificationsFilters({
       <select
         value={readStateValue}
         onChange={handleReadStateChange}
-        className="h-9 rounded-md border border-zinc-800 bg-zinc-900/50 px-3 text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-primary md:w-52"
+        className="h-11 md:h-9 rounded-md border border-zinc-800 bg-zinc-900/50 px-3 text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-primary md:w-52"
         aria-label={t("notifications.filters.readState")}
       >
         <option value="all">{t("notifications.filters.all")}</option>
@@ -43,7 +43,7 @@ export function NotificationsFilters({
         type="button"
         onClick={onMarkAllAsRead}
         disabled={!canMarkAllAsRead || isMarkingAllAsRead}
-        className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-white/10 bg-zinc-100 px-4 text-sm font-medium text-zinc-950 transition-colors hover:bg-white disabled:cursor-not-allowed disabled:border-zinc-800 disabled:bg-zinc-900/50 disabled:text-zinc-500 md:w-auto"
+        className="inline-flex h-11 md:h-9 items-center justify-center gap-2 rounded-md border border-white/10 bg-zinc-100 px-4 text-sm font-medium text-zinc-950 transition-colors hover:bg-white disabled:cursor-not-allowed disabled:border-zinc-800 disabled:bg-zinc-900/50 disabled:text-zinc-500 md:w-auto"
       >
         <CheckCheck className="h-4 w-4" />
         {isMarkingAllAsRead

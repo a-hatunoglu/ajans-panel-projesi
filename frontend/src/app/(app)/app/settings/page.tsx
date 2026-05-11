@@ -65,8 +65,8 @@ function ChangePasswordSection() {
       resetPw();
       setPwSuccess(true);
       setTimeout(() => setPwSuccess(false), 3000);
-    } catch (err) {
-      console.error(err);
+    } catch {
+      // Error is surfaced by mutation.isError state
     }
   };
 
@@ -78,7 +78,7 @@ function ChangePasswordSection() {
 
       <form
         onSubmit={handlePwSubmit(onPasswordSubmit)}
-        className="space-y-6 max-w-xl"
+        className="flex flex-col gap-6 max-w-xl"
       >
         <div>
           <label className="mb-2 block text-sm font-medium text-zinc-300">
@@ -240,8 +240,8 @@ export default function SettingsPage() {
       reset(data); // reset form dirty state
       setSuccessMsg(true);
       setTimeout(() => setSuccessMsg(false), 3000);
-    } catch (err) {
-      console.error(err);
+    } catch {
+      // Error is surfaced by mutation.isError state
     }
   };
 
@@ -264,7 +264,7 @@ export default function SettingsPage() {
             {t("settings.profile.title")}
           </h2>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-xl">
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6 max-w-xl">
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label className="mb-2 block text-sm font-medium text-zinc-300">

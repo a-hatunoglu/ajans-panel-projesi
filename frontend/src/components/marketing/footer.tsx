@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-
 import { Command } from "lucide-react";
 import { useI18n } from "@/i18n/provider";
 
@@ -27,8 +26,10 @@ export function MarketingFooter() {
           <div className="flex flex-col gap-4">
             <h4 className="text-sm font-semibold text-white tracking-tight">{t("marketing.footer.product")}</h4>
             <div className="flex flex-col gap-3 text-sm text-zinc-500">
-              <a href="#workflow" className="hover:text-zinc-300 transition-colors">{t("marketing.footer.workflow")}</a>
-              <a href="#platforms" className="hover:text-zinc-300 transition-colors">{t("marketing.footer.platforms")}</a>
+              <Link href="/features" className="hover:text-zinc-300 transition-colors">{t("marketing.footer.features")}</Link>
+              <Link href="/workflow" className="hover:text-zinc-300 transition-colors">{t("marketing.footer.workflow")}</Link>
+              <Link href="/platforms" className="hover:text-zinc-300 transition-colors">{t("marketing.footer.platforms")}</Link>
+              <Link href="/contact" className="hover:text-zinc-300 transition-colors">{t("marketing.footer.contact")}</Link>
             </div>
           </div>
 
@@ -37,7 +38,6 @@ export function MarketingFooter() {
             <div className="flex flex-col gap-3 text-sm text-zinc-500">
               <Link href="/privacy" className="hover:text-zinc-300 transition-colors">{t("marketing.footer.privacyPolicy")}</Link>
               <Link href="/terms" className="hover:text-zinc-300 transition-colors">{t("marketing.footer.termsOfService")}</Link>
-              <Link href="/cookies" className="hover:text-zinc-300 transition-colors">{t("marketing.footer.cookiePolicy")}</Link>
             </div>
           </div>
         </div>

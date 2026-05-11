@@ -1,4 +1,7 @@
 import { z } from 'zod';
+import { CompanyRole } from '../../shared/types/enums';
+
+const validCompanyRoles = [CompanyRole.EDITOR, CompanyRole.DESIGNER, CompanyRole.CLIENT] as const;
 
 export const createCompanySchema = z.object({
   name: z.string().min(1, 'Şirket adı zorunludur.').max(200),
@@ -25,11 +28,16 @@ export const companyIdParamSchema = z.object({
 
 export const addCompanyUserSchema = z.object({
   userId: z.string().uuid('Geçersiz kullanıcı ID formatı.'),
+  roles: z.array(z.enum(validCompanyRoles)).min(1, 'En az bir operasyonel rol belirtilmelidir.'),
 });
 
 export const companyUserParamsSchema = z.object({
   id: z.string().uuid('Geçersiz şirket ID formatı.'),
   userId: z.string().uuid('Geçersiz kullanıcı ID formatı.'),
+});
+
+export const updateCompanyUserRolesSchema = z.object({
+  roles: z.array(z.enum(validCompanyRoles)).min(1, 'En az bir operasyonel rol belirtilmelidir.'),
 });
 
 export type CreateCompanyInput = z.infer<typeof createCompanySchema>;

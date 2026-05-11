@@ -36,9 +36,10 @@ type CompanyUsersResponse = {
         email: string;
         firstName: string;
         lastName: string;
-        role: ContentCreateMemberOption["role"];
+        role: ContentCreateMemberOption["globalRole"];
         isActive: boolean;
       };
+      roles: string[];
     }>;
   };
 };
@@ -88,7 +89,8 @@ export function useCreateCompanyMemberOptions(companyId?: string, enabled = true
         id: member.user.id,
         name: getFullName(member.user.firstName, member.user.lastName, member.user.email),
         email: member.user.email,
-        role: member.user.role,
+        roles: Array.isArray(member.roles) ? member.roles : [],
+        globalRole: member.user.role,
         isActive: member.user.isActive,
       }));
     },

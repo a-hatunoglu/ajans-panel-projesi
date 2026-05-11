@@ -32,11 +32,11 @@ export function StatCards({ stats }: { stats: StatItem[] }) {
           <div className="mt-2 text-2xl font-medium tabular-nums text-zinc-100">
             {stat.value ?? "--"}
           </div>
-          {stat.value === null && (
+          {stat.value === null ? (
             <div className="mt-1 text-xs text-zinc-500">
               {t("dashboard.stats.unavailable")}
             </div>
-          )}
+          ) : null}
         </div>
       ))}
     </div>

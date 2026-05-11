@@ -7,7 +7,7 @@ type CompaniesResponse = {
   data: CompanyType[];
   meta?: {
     page: number;
-    limit: number;
+    perPage: number;
     total: number;
     totalPages: number;
   };
@@ -18,6 +18,17 @@ export function useCompanies() {
     queryKey: ["companies"],
     queryFn: async () => {
       const response = await apiClient<CompaniesResponse>("/companies");
+      return response.data;
+    },
+  });
+}
+
+export function useCompaniesTrash(enabled = true) {
+  return useQuery({
+    queryKey: ["companies-trash"],
+    enabled,
+    queryFn: async () => {
+      const response = await apiClient<CompaniesResponse>("/companies/trash");
       return response.data;
     },
   });

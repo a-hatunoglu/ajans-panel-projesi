@@ -10,6 +10,7 @@ import { getContentPermissions } from "@/features/content-detail/permissions";
 import { useLabels } from "@/lib/labels";
 import { useI18n } from "@/i18n/provider";
 import { useAuth } from "@/providers/auth-provider";
+import { useCompanyRoles } from "@/hooks/use-company-roles";
 
 export default function ContentSchedulePage() {
   const { t } = useI18n();
@@ -18,6 +19,7 @@ export default function ContentSchedulePage() {
   const params = useParams<{ id: string }>();
   const contentId = Array.isArray(params.id) ? params.id[0] : params.id;
   const { data, isLoading, isError, error } = useContentDetail(contentId);
+  const { companyRoles } = useCompanyRoles(data?.companyId);
 
   if (!contentId) {
     return (
@@ -52,7 +54,7 @@ export default function ContentSchedulePage() {
     );
   }
 
-  const permissions = getContentPermissions(data, user, false);
+  const permissions = getContentPermissions(data, user, companyRoles, isAuthLoading);
 
   if (!permissions.hasScheduleAccessByRole) {
     return (

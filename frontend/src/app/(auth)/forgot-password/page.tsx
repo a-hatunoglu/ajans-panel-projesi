@@ -56,13 +56,13 @@ export default function ForgotPasswordPage() {
 
   if (isSuccess) {
     return (
-      <div className="w-full max-w-sm mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 text-center">
+      <div className="w-full max-w-sm mx-auto flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500 text-center">
         <div className="flex justify-center">
           <div className="h-12 w-12 rounded-full bg-green-500/10 text-green-500 flex items-center justify-center border border-green-500/20">
             <Check className="w-6 h-6" />
           </div>
         </div>
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           <h1 className="text-2xl font-semibold tracking-tight">{t("auth.forgotPassword.successTitle")}</h1>
           <p className="text-sm text-zinc-400 max-w-[280px] mx-auto leading-relaxed">
             {t("auth.forgotPassword.successDescription")}
@@ -81,20 +81,20 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="w-full max-w-sm mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="space-y-2 text-center">
+    <div className="w-full max-w-sm mx-auto flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex flex-col gap-2 text-center">
         <h1 className="text-3xl font-semibold tracking-tight">{t("auth.forgotPassword.title")}</h1>
         <p className="text-sm text-zinc-400">{t("auth.forgotPassword.subtitle")}</p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         {errorInfo && (
           <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-md text-sm text-red-500 font-medium">
             {errorInfo}
           </div>
         )}
 
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           <label className="text-sm font-medium text-zinc-300" htmlFor="email">{t("auth.forgotPassword.email")}</label>
           <input
             id="email"

@@ -5,11 +5,13 @@ import { PageContainer } from "@/components/shared/page-container";
 import { PageStatePanel } from "@/components/shared/page-state-panel";
 import { RestrictedAccessPanel } from "@/components/shared/restricted-access-panel";
 import { ContentEditForm } from "@/features/content-edit/components/content-edit-form";
+import { ContentMediaUpload } from "@/features/content-detail/components/content-media-upload";
 import { useContentDetail } from "@/features/content-detail/api/queries";
 import { getContentPermissions } from "@/features/content-detail/permissions";
 import { useLabels } from "@/lib/labels";
 import { useI18n } from "@/i18n/provider";
 import { useAuth } from "@/providers/auth-provider";
+import { useCompanyRoles } from "@/hooks/use-company-roles";
 
 export default function ContentEditPage() {
   const { t } = useI18n();
@@ -18,6 +20,7 @@ export default function ContentEditPage() {
   const params = useParams<{ id: string }>();
   const contentId = Array.isArray(params.id) ? params.id[0] : params.id;
   const { data, isLoading, isError, error } = useContentDetail(contentId);
+  const { companyRoles } = useCompanyRoles(data?.companyId);
 
   if (!contentId) {
     return (
@@ -52,7 +55,7 @@ export default function ContentEditPage() {
     );
   }
 
-  const permissions = getContentPermissions(data, user, false);
+  const permissions = getContentPermissions(data, user, companyRoles, isAuthLoading);
 
   if (!permissions.hasEditAccessByRole) {
     return (
@@ -68,7 +71,7 @@ export default function ContentEditPage() {
     );
   }
 
-  if (!permissions.isEditableStatus) {
+  if (!permissions.canEdit) {
     return (
       <PageStatePanel
         title={t("contentEdit.notEditableTitle")}
@@ -89,7 +92,11 @@ export default function ContentEditPage() {
         <p className="text-sm text-zinc-400">{t("contentEdit.pageSubtitle")}</p>
       </div>
 
-      <ContentEditForm data={data} />
+      <ContentMediaUpload contentId={data.id} media={data.media} canManage={true} />
+
+      <div className="mt-6">
+        <ContentEditForm data={data} />
+      </div>
     </PageContainer>
   );
 }

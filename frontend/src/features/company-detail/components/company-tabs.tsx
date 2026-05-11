@@ -15,7 +15,10 @@ export function CompanyTabs({ activeTab, onTabChange }: CompanyTabsProps) {
   const { user } = useAuth();
   const { t } = useI18n();
   const role = user?.role || "guest";
-  const visibleTabs = getCompanyTabs(t).filter((tab) => tab.allowedRoles.includes(role));
+  const agencyRole = user?.agencyRole;
+  const visibleTabs = getCompanyTabs(t).filter(
+    (tab) => tab.allowedRoles.includes(role) || (agencyRole && tab.allowedRoles.includes(agencyRole))
+  );
 
   return (
     <div className="border-b border-white/5 overflow-x-auto no-scrollbar mb-8">

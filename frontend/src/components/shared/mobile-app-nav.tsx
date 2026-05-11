@@ -53,7 +53,7 @@ export function MobileAppNav() {
         type="button"
         onClick={() => setIsOpen(true)}
         aria-label={t("common.openNavigation")}
-        className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-white/10 bg-zinc-900/50 text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-white lg:hidden"
+        className="inline-flex h-11 w-11 items-center justify-center rounded-md border border-white/10 bg-zinc-900/50 text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-white lg:hidden"
       >
         <Menu className="h-5 w-5" />
       </button>
@@ -84,7 +84,7 @@ export function MobileAppNav() {
                 type="button"
                 onClick={() => setIsOpen(false)}
                 aria-label={t("common.closeNavigation")}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/10 bg-zinc-900/50 text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-white"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-md border border-white/10 bg-zinc-900/50 text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-white"
               >
                 <X className="h-4 w-4" />
               </button>

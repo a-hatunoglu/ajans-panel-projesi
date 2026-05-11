@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,8 +15,10 @@ interface InvitePlatformUserDialogProps {
   companyId: string;
   open: boolean;
   onClose: () => void;
-  onSuccessReturn: () => void; // Called after full success + dismissed
+  onSuccessReturn: () => void;
 }
+
+const OPERATIONAL_ROLES = ["editor", "designer", "client"] as const;
 
 export function InvitePlatformUserDialog({
   companyId,
@@ -31,9 +33,6 @@ export function InvitePlatformUserDialog({
       firstName: z.string().min(1, t("companyDetail.users.invite.validation.firstNameRequired")),
       lastName: z.string().min(1, t("companyDetail.users.invite.validation.lastNameRequired")),
       email: z.string().email(t("companyDetail.users.invite.validation.emailRequired")),
-      role: z.enum(["admin", "editor", "designer", "client"] as const, {
-        message: t("companyDetail.users.invite.validation.invalidRole"),
-      }),
     });
   }, [t]);
 
@@ -51,7 +50,6 @@ export function InvitePlatformUserDialog({
       firstName: "",
       lastName: "",
       email: "",
-      role: "editor", // safe default
     },
   });
 
@@ -60,34 +58,53 @@ export function InvitePlatformUserDialog({
 
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
 
   const isPending = inviteMutation.isPending || attachMutation.isPending;
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     if (isPending) return;
     setSubmitError(null);
     setShowSuccess(false);
+    setSelectedRoles([]);
     reset();
     onClose();
-  };
+  }, [isPending, reset, onClose]);
 
-  const handleSuccessClose = () => {
+  const handleSuccessClose = useCallback(() => {
     setShowSuccess(false);
+    setSelectedRoles([]);
     reset();
     onSuccessReturn();
-  };
+  }, [reset, onSuccessReturn]);
+
+  const toggleRole = useCallback((role: string) => {
+    setSelectedRoles((prev) =>
+      prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]
+    );
+  }, []);
 
   const onSubmit = async (data: InviteFormValues) => {
+    if (selectedRoles.length === 0) return;
     setSubmitError(null);
+
     try {
-      // 1. Invite User
-      const inviteRes = await inviteMutation.mutateAsync(data);
+      // 1. Sistem kullanıcısı oluştur — global rol her zaman "member"
+      const inviteRes = await inviteMutation.mutateAsync({
+        email: data.email,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        role: "user",
+      });
       const newUserId = inviteRes.user.id;
 
-      // 2. Attach User
-      await attachMutation.mutateAsync({ userId: newUserId });
+      // 2. Şirkete operasyonel rollerle ekle
+      await attachMutation.mutateAsync({
+        userId: newUserId,
+        roles: selectedRoles,
+      });
 
-      // 3. Show Success
+      // 3. Başarı göster
       setShowSuccess(true);
     } catch (err) {
       const message =
@@ -100,6 +117,12 @@ export function InvitePlatformUserDialog({
 
   if (!open) return null;
 
+  const roleLabels: Record<string, string> = {
+    editor: t("companyDetail.users.invite.roles.editor"),
+    designer: t("companyDetail.users.invite.roles.designer"),
+    client: t("companyDetail.users.invite.roles.client"),
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div
@@ -109,7 +132,6 @@ export function InvitePlatformUserDialog({
 
       <div className="relative w-full max-w-md mx-4 bg-zinc-950 border border-white/10 rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
         {showSuccess ? (
-          // --- SUCCESS STATE (Clean confirmation) ---
           <div className="p-8 text-center flex flex-col items-center">
             <div className="h-12 w-12 rounded-full bg-green-500/10 text-green-500 flex items-center justify-center mb-4 border border-green-500/20">
               <Check className="w-6 h-6" />
@@ -130,7 +152,6 @@ export function InvitePlatformUserDialog({
             </button>
           </div>
         ) : (
-          // --- FORM STATE ---
           <>
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
               <div className="flex items-center gap-3">
@@ -163,7 +184,8 @@ export function InvitePlatformUserDialog({
                 </div>
               )}
 
-              <div className="space-y-4">
+              <div className="flex flex-col gap-4">
+                {/* Ad / Soyad */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-medium text-zinc-400 mb-1.5">
@@ -197,6 +219,7 @@ export function InvitePlatformUserDialog({
                   </div>
                 </div>
 
+                {/* E-posta */}
                 <div>
                   <label className="block text-xs font-medium text-zinc-400 mb-1.5">
                     {t("companyDetail.users.invite.form.email")}
@@ -214,27 +237,42 @@ export function InvitePlatformUserDialog({
                   )}
                 </div>
 
+                {/* Operasyonel Roller — Checkbox */}
                 <div>
-                  <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+                  <p className="mb-2 text-xs font-medium text-zinc-400">
                     {t("companyDetail.users.invite.form.role")}
-                  </label>
-                  <select
-                    {...register("role")}
-                    disabled={isPending}
-                    className="w-full h-9 px-3 rounded-md border border-zinc-800 bg-zinc-900/50 text-sm text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-600 disabled:opacity-50 appearance-none"
-                  >
-                    <option value="editor">{t("companyDetail.users.invite.roles.editor")}</option>
-                    <option value="designer">{t("companyDetail.users.invite.roles.designer")}</option>
-                    <option value="client">{t("companyDetail.users.invite.roles.client")}</option>
-                    <option value="admin">{t("companyDetail.users.invite.roles.admin")}</option>
-                  </select>
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    {OPERATIONAL_ROLES.map((role) => (
+                      <label
+                        key={role}
+                        className="flex items-center gap-3 rounded-lg border border-white/5 bg-zinc-900/20 px-4 py-3 cursor-pointer hover:bg-zinc-900/40 transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedRoles.includes(role)}
+                          onChange={() => toggleRole(role)}
+                          disabled={isPending}
+                          className="h-4 w-4 rounded border-zinc-700 bg-zinc-900 text-blue-500 focus:ring-1 focus:ring-blue-500 focus:ring-offset-0"
+                        />
+                        <span className="text-sm text-zinc-200">
+                          {roleLabels[role] || role}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                  {selectedRoles.length === 0 && (
+                    <p className="mt-2 text-xs text-amber-400/80">
+                      {t("companyDetail.users.add.rolesRequired")}
+                    </p>
+                  )}
                 </div>
               </div>
 
               <div className="mt-6 flex justify-end">
                 <button
                   type="submit"
-                  disabled={isPending || !isValid}
+                  disabled={isPending || !isValid || selectedRoles.length === 0}
                   className="h-9 px-4 flex items-center gap-2 rounded-md bg-white text-black text-sm font-medium hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}

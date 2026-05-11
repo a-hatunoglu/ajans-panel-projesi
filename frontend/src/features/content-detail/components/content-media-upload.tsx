@@ -6,39 +6,61 @@ import { useI18n } from "@/i18n/provider";
 import { ContentMediaItem } from "../types";
 import { apiClient } from "@/lib/api-client";
 import { useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@/providers/auth-provider";
 
 interface ContentMediaUploadProps {
   contentId: string;
   media: ContentMediaItem[];
+  canManage: boolean;
 }
 
-export function ContentMediaUpload({ contentId, media }: ContentMediaUploadProps) {
+export function ContentMediaUpload({ contentId, media, canManage }: ContentMediaUploadProps) {
   const { t } = useI18n();
   const [isUploading, setIsUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
-  const { user } = useAuth();
-
-  const canManage = ["owner", "admin", "editor", "designer"].includes(user?.role || "guest");
 
   const handleUpload = async (file: File) => {
     if (!canManage) return;
     setIsUploading(true);
-    const formData = new FormData();
-    formData.append("file", file);
 
     try {
-      await apiClient(`/contents/${contentId}/media`, {
+      // 1. Get Presigned URL
+      const presignedRes = await apiClient<{ data: { uploadUrl: string; finalUrl: string } }>(`/contents/${contentId}/media/presigned-url`, {
         method: "POST",
-        body: formData,
-        // Let the browser set the boundary correctly for FormData
-        // apiClient will remove 'Content-Type': 'application/json' if body is FormData
+        body: JSON.stringify({
+          filename: file.name,
+          mimetype: file.type,
+        }),
       });
+
+      const { uploadUrl, finalUrl } = presignedRes.data;
+
+      // 2. Upload to S3 directly
+      const uploadRes = await fetch(uploadUrl, {
+        method: "PUT",
+        body: file,
+        headers: {
+          "Content-Type": file.type,
+        },
+      });
+
+      if (!uploadRes.ok) {
+        throw new Error("Direct S3 upload failed");
+      }
+
+      // 3. Confirm Media Upload with backend
+      await apiClient(`/contents/${contentId}/media/confirm`, {
+        method: "POST",
+        body: JSON.stringify({
+          url: finalUrl,
+          fileType: file.type,
+          sizeBytes: file.size,
+        }),
+      });
+
       await queryClient.invalidateQueries({ queryKey: ["content-detail", contentId] });
-    } catch (error) {
-      console.error(error);
+    } catch {
       alert(t("contentDetail.media.uploadError", { defaultValue: "Dosya yüklenirken hata oluştu." }));
     } finally {
       setIsUploading(false);
@@ -54,8 +76,7 @@ export function ContentMediaUpload({ contentId, media }: ContentMediaUploadProps
         method: "DELETE",
       });
       await queryClient.invalidateQueries({ queryKey: ["content-detail", contentId] });
-    } catch (error) {
-      console.error(error);
+    } catch {
       alert(t("contentDetail.media.deleteError", { defaultValue: "Silme işlemi başarısız oldu." }));
     }
   };

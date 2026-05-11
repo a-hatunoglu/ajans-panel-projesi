@@ -4,6 +4,7 @@ import { NotFoundError } from '../../shared/errors/app-error';
 import { parsePagination, createPaginationMeta } from '../../shared/utils/pagination';
 import { logger } from '../../config/logger';
 import { ListNotificationsQuery } from './notifications.schema';
+import { emitToUser } from '../../config/socket';
 // ─── Internal Notification Helper ────────────────────────────
 
 export interface CreateNotificationParams {
@@ -28,7 +29,7 @@ export async function createNotification(params: CreateNotificationParams): Prom
   }
 
   try {
-    await prisma.notification.create({
+    const notification = await prisma.notification.create({
       data: {
         userId: params.userId,
         companyId: params.companyId,
@@ -39,6 +40,8 @@ export async function createNotification(params: CreateNotificationParams): Prom
         resourceId: params.resourceId,
       },
     });
+
+    emitToUser(params.userId, 'notification:new', notification);
   } catch (err) {
     logger.error('Bildirim oluşturulamadı:', err);
   }

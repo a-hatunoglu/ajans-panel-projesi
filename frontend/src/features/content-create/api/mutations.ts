@@ -4,6 +4,7 @@ import type { ContentCreateFormValues, ContentCreateResponse } from "../types";
 
 type CreateContentPayload = Omit<ContentCreateFormValues, "body"> & {
   body: string | null;
+  scheduledAt?: string;
 };
 
 export function useCreateContentMutation() {
@@ -11,7 +12,12 @@ export function useCreateContentMutation() {
 
   return useMutation({
     mutationFn: async (payload: CreateContentPayload) => {
-      const { companyId, ...body } = payload;
+      const { companyId, scheduledAt, ...rest } = payload;
+
+      const body: Record<string, unknown> = { ...rest };
+      if (scheduledAt) {
+        body.scheduledAt = new Date(scheduledAt).toISOString();
+      }
 
       return apiClient<ContentCreateResponse>(`/companies/${companyId}/contents`, {
         method: "POST",

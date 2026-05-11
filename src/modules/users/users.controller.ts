@@ -30,7 +30,7 @@ export async function changePassword(req: Request, res: Response, next: NextFunc
 
 export async function inviteUser(req: Request, res: Response, next: NextFunction) {
   try {
-    const result = await usersService.inviteUser(req.body, req.user!.role);
+    const result = await usersService.inviteUser(req.body, req.user!.role, req.agencyId, req.agencyRole);
     res.status(201).json({ success: true, data: result });
   } catch (err) {
     next(err);
@@ -39,7 +39,7 @@ export async function inviteUser(req: Request, res: Response, next: NextFunction
 
 export async function listUsers(req: Request, res: Response, next: NextFunction) {
   try {
-    const result = await usersService.listUsers(req.query);
+    const result = await usersService.listUsers(req.query, req.agencyId);
     res.json({ success: true, data: result.users, meta: result.meta });
   } catch (err) {
     next(err);
@@ -62,6 +62,7 @@ export async function updateUser(req: Request, res: Response, next: NextFunction
       req.body,
       req.user!.id,
       req.user!.role,
+      req.agencyRole,
     );
     res.json({ success: true, data: { user } });
   } catch (err) {
@@ -75,6 +76,7 @@ export async function deactivateUser(req: Request, res: Response, next: NextFunc
       req.params.id as string,
       req.user!.id,
       req.user!.role,
+      req.agencyRole,
     );
     res.json({ success: true, data: { user } });
   } catch (err) {
@@ -84,7 +86,16 @@ export async function deactivateUser(req: Request, res: Response, next: NextFunc
 
 export async function sendResetLink(req: Request, res: Response, next: NextFunction) {
   try {
-    const result = await usersService.sendResetLink(req.params.id as string, req.user!.role);
+    const result = await usersService.sendResetLink(req.params.id as string, req.user!.role, req.agencyRole);
+    res.json({ success: true, data: result });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function completeOnboarding(req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await usersService.completeOnboarding(req.user!.id);
     res.json({ success: true, data: result });
   } catch (err) {
     next(err);

@@ -9,7 +9,7 @@ export default function TermsOfServicePage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-6">
-      <div className="w-full max-w-lg space-y-6 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="w-full max-w-lg flex flex-col gap-6 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-100">
           {t("legal.termsOfService.title")}
         </h1>

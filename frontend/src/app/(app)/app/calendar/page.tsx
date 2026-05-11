@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { addWeeks, startOfWeek } from "date-fns";
-import { useAuth } from "@/providers/auth-provider";
+import { useAuth } from "@/providers/auth-provider"
+import { canManageCompanies } from "@/lib/roles";;
 import { PageContainer } from "@/components/shared/page-container";
 import { PageStatePanel } from "@/components/shared/page-state-panel";
 import { CalendarToolbar } from "@/features/calendar/components/calendar-toolbar";
@@ -19,7 +20,10 @@ export default function CalendarPage() {
   const { formatWeekRange } = useFormatters();
   const { user, isLoading: isAuthLoading } = useAuth();
   const role = user?.role || "guest";
-  const canCreate = ["owner", "admin", "editor", "designer"].includes(role);
+  const companyRoles = user?.companyRoles ?? [];
+  const isOwnerOrAdmin = canManageCompanies(user?.role, user?.agencyRole ?? undefined);
+  const hasOperationalRole = companyRoles.some((r) => ["editor", "designer"].includes(r));
+  const canCreate = isOwnerOrAdmin || hasOperationalRole;
   const [weekStart, setWeekStart] = useState(() =>
     startOfWeek(new Date(), { weekStartsOn: 1 }),
   );
@@ -29,7 +33,7 @@ export default function CalendarPage() {
     data: days,
     isLoading,
     isError,
-  } = useCalendarWeek(weekStart, role, !isAuthLoading);
+  } = useCalendarWeek(weekStart, role, !isAuthLoading, user?.agencyRole ?? undefined);
   const calendarDays = days ?? [];
 
   const { data: companies } = useCreateCompanyOptions(!isAuthLoading);

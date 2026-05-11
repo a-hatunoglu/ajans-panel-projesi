@@ -4,7 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/providers/auth-provider";
 import { useI18n } from "@/i18n/provider";
-import { getNavigationItems } from "@/lib/navigation";
+import {
+  getNavigationItems,
+  getPlatformNavigationItems,
+} from "@/lib/navigation";
+import { isPlatformOwner } from "@/lib/roles";
 import { useUnreadCount } from "@/features/notifications/api/queries";
 import { cn } from "@/lib/utils";
 
@@ -17,11 +21,31 @@ interface AppNavigationProps {
 }
 
 function isNavItemActive(pathname: string, href: string) {
-  if (href === "/app") {
+  if (href === "/app" || href === "/app/platform") {
     return pathname === href;
   }
 
   return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+/**
+ * Determines whether the platform owner is currently in platform-level view
+ * (as opposed to impersonating an agency).
+ */
+function useIsPlatformView() {
+  const pathname = usePathname();
+  const { user } = useAuth();
+
+  if (!user || !isPlatformOwner(user.role)) return false;
+
+  // If on /app/platform routes → definitely platform view
+  if (pathname.startsWith("/app/platform")) return true;
+
+  // If no active agency in localStorage → platform view
+  if (typeof window !== "undefined") {
+    return !localStorage.getItem("agencyos-active-agency-id");
+  }
+  return true;
 }
 
 export function AppNavigation({
@@ -33,9 +57,16 @@ export function AppNavigation({
   const { t } = useI18n();
   const pathname = usePathname();
   const userRole = user?.role || "guest";
-  const visibleNavItems = getNavigationItems(t).filter((item) =>
-    item.allowedRoles.includes(userRole),
-  );
+  const userAgencyRole = user?.agencyRole;
+  const isInPlatformView = useIsPlatformView();
+
+  const visibleNavItems = isInPlatformView
+    ? getPlatformNavigationItems()
+    : getNavigationItems(t).filter((item) =>
+        item.allowedRoles.includes(userRole) ||
+        (userAgencyRole && item.allowedRoles.includes(userAgencyRole)),
+      );
+
   const { data: unreadCount } = useUnreadCount();
   const hasUnread = (unreadCount ?? 0) > 0;
 
@@ -55,6 +86,7 @@ export function AppNavigation({
             key={item.href}
             href={item.href}
             onClick={onNavigate}
+            data-tour={item.tourKey}
             className={cn(
               "flex items-center rounded-md transition-colors",
               variant === "desktop"

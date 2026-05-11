@@ -13,6 +13,7 @@ export function createContentCreateSchema(t: TranslateFn) {
     body: z.string(),
     assignedDesignerId: z.string().uuid(t("contentCreate.validation.assignedDesigner")),
     assignedEditorId: z.string().uuid(t("contentCreate.validation.assignedEditor")),
+    scheduledAt: z.string().optional(),
   });
 }
 

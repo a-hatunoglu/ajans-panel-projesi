@@ -67,9 +67,9 @@ export async function changeStatus(req: Request, res: Response, next: NextFuncti
   }
 }
 
-export async function hardDelete(req: Request, res: Response, next: NextFunction) {
+export async function softDelete(req: Request, res: Response, next: NextFunction) {
   try {
-    const result = await paymentsService.hardDelete(
+    const result = await paymentsService.softDelete(
       req.params.id as string,
       getActor(req)
     );

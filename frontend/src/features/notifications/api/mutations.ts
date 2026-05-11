@@ -4,7 +4,10 @@ import { apiClient } from "@/lib/api-client";
 async function invalidateNotifications(
   queryClient: ReturnType<typeof useQueryClient>,
 ) {
-  await queryClient.invalidateQueries({ queryKey: ["notifications"] });
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: ["notifications"] }),
+    queryClient.invalidateQueries({ queryKey: ["notifications-unread-count"] })
+  ]);
 }
 
 export function useMarkNotificationAsReadMutation() {
@@ -12,7 +15,7 @@ export function useMarkNotificationAsReadMutation() {
 
   return useMutation({
     mutationFn: async (notificationId: string) => {
-      return apiClient(`/notifications/${notificationId}/read`, {
+      return apiClient<{ success: boolean }>(`/notifications/${notificationId}/read`, {
         method: "PUT",
       });
     },
@@ -27,7 +30,7 @@ export function useMarkAllNotificationsAsReadMutation() {
 
   return useMutation({
     mutationFn: async () => {
-      return apiClient("/notifications/read-all", {
+      return apiClient<{ success: boolean }>("/notifications/read-all", {
         method: "PUT",
       });
     },

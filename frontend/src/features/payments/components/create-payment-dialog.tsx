@@ -139,7 +139,7 @@ export function CreatePaymentDialog({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="px-6 py-5 space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 px-6 py-5">
           {submitError && (
             <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-md text-sm text-red-500 font-medium">
               {submitError}
@@ -147,7 +147,7 @@ export function CreatePaymentDialog({
           )}
 
           {/* Company (required) */}
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-1.5">
             <label
               htmlFor="payment-company"
               className="text-xs font-medium text-zinc-300"
@@ -189,7 +189,7 @@ export function CreatePaymentDialog({
 
           {/* Amount + Currency */}
           <div className="grid grid-cols-3 gap-3">
-            <div className="col-span-2 space-y-1.5">
+            <div className="col-span-2 flex flex-col gap-1.5">
               <label
                 htmlFor="payment-amount"
                 className="text-xs font-medium text-zinc-300"
@@ -213,7 +213,7 @@ export function CreatePaymentDialog({
               )}
             </div>
 
-            <div className="space-y-1.5">
+            <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="payment-currency"
                 className="text-xs font-medium text-zinc-300"
@@ -237,7 +237,7 @@ export function CreatePaymentDialog({
           </div>
 
           {/* Due Date (required) */}
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-1.5">
             <label
               htmlFor="payment-due-date"
               className="text-xs font-medium text-zinc-300"
@@ -260,7 +260,7 @@ export function CreatePaymentDialog({
 
           {/* Period Start / End */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
+            <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="payment-period-start"
                 className="text-xs font-medium text-zinc-300"
@@ -276,7 +276,7 @@ export function CreatePaymentDialog({
               />
             </div>
 
-            <div className="space-y-1.5">
+            <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="payment-period-end"
                 className="text-xs font-medium text-zinc-300"
@@ -294,7 +294,7 @@ export function CreatePaymentDialog({
           </div>
 
           {/* Notes */}
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-1.5">
             <label
               htmlFor="payment-notes"
               className="text-xs font-medium text-zinc-300"

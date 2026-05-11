@@ -49,6 +49,7 @@ export function useContentsList(params: ContentsListQueryParams = {}) {
 
   return useQuery({
     queryKey: ["contents", search ?? "", status ?? "all", sort, page, perPage],
+    staleTime: 30_000, // 30s — contents change frequently in active workflow
     placeholderData: (previousData) => previousData,
     queryFn: async () => {
       return apiClient<ContentsListResponse>("/contents", {

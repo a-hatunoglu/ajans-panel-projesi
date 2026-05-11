@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { AttentionItem } from "../types";
@@ -16,21 +17,21 @@ function getBadgeColor(status: AttentionItem["status"]) {
   }
 }
 
-export function NeedsAttentionList({ items }: { items: AttentionItem[] }) {
+export const NeedsAttentionList = React.memo(function NeedsAttentionList({ items }: { items: AttentionItem[] }) {
   const uiCopy = useUiCopy();
   const { formatCompactDate } = useFormatters();
   const { getContentDateKindLabel, getContentStatusLabel } = useLabels();
 
   if (items.length === 0) {
     return (
-      <div className="p-8 text-center border border-white/5 rounded-xl bg-zinc-950">
+      <div className="p-8 text-center">
         <p className="text-sm text-zinc-500">{uiCopy.allCaughtUp}</p>
       </div>
     );
   }
 
   return (
-    <div className="border border-white/5 rounded-xl bg-zinc-950 divide-y divide-white/5 flex flex-col">
+    <div className="divide-y divide-white/[0.04] max-h-[360px] overflow-y-auto">
       {items.map((item) => (
         <Link
           key={item.id}
@@ -53,4 +54,4 @@ export function NeedsAttentionList({ items }: { items: AttentionItem[] }) {
       ))}
     </div>
   );
-}
+});

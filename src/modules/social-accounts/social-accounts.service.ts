@@ -1,5 +1,5 @@
 import { prisma } from '../../config/database';
-import { UserRole } from '../../shared/types/enums';
+import { UserRole, CompanyRole } from '../../shared/types/enums';
 import { NotFoundError, ForbiddenError } from '../../shared/errors/app-error';
 import { UpdateSocialAccountInput, CreateSocialAccountInput } from './social-accounts.schema';
 import { ActorContext } from '../../shared/types/actor-context';
@@ -41,7 +41,7 @@ async function findAccountWithAccess(
   }
 
   // Erişim kontrolü
-  const isAdmin = actor.role === UserRole.OWNER || actor.role === UserRole.ADMIN;
+  const isAdmin = actor.role === UserRole.PLATFORM_OWNER || actor.agencyRole === 'agency_admin';
 
   if (!isAdmin) {
     // Şirket üyeliği kontrolü
@@ -53,7 +53,7 @@ async function findAccountWithAccess(
     }
 
     // Yazma yetkisi kontrolü (Editor yazabilir, Designer/Client yazamaz)
-    if (requireEdit && actor.role !== UserRole.EDITOR) {
+    if (requireEdit && !(actor.companyRoles ?? []).includes(CompanyRole.EDITOR)) {
       throw new ForbiddenError('Bu işlem için yetkiniz yok.');
     }
   }
@@ -85,6 +85,12 @@ export async function create(
   actor: ActorContext,
 ) {
   await assertCompanyAccess(companyId, actor);
+
+  if (actor.role !== UserRole.PLATFORM_OWNER && actor.agencyRole !== 'agency_admin') {
+     if (!(actor.companyRoles ?? []).includes(CompanyRole.EDITOR)) {
+       throw new ForbiddenError('Yeni sosyal hesap ekleme yetkiniz yok. Sadece owner/admin veya editor hesap ekleyebilir.');
+     }
+  }
 
   const account = await prisma.socialAccount.create({
     data: {
@@ -144,7 +150,7 @@ export async function softDelete(accountId: string, actor: ActorContext) {
   const account = await findAccountWithAccess(accountId, actor, true);
 
   // Editor silemez, sadece Owner/Admin
-  if (actor.role !== UserRole.OWNER && actor.role !== UserRole.ADMIN) {
+  if (actor.role !== UserRole.PLATFORM_OWNER && actor.agencyRole !== 'agency_admin') {
     throw new ForbiddenError('Sosyal hesap silme yetkisi sadece Owner ve Admin rollerine aittir.');
   }
 

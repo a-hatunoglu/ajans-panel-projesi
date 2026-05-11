@@ -4,9 +4,11 @@ import { NotFoundError, ForbiddenError } from '../errors/app-error';
 import { ActorContext } from '../types/actor-context';
 
 /**
- * Aktif (soft-deleted olmayan) şirkete erişim kontrolü.
- * Owner/Admin → şirket var mı yeter.
- * Diğer roller → company_users ilişkisi de gerekli.
+ * Aktif (soft-deleted olmayan) şirkete erişim kontrolü (multi-tenancy uyumlu).
+ *
+ * Platform Owner → her şirkete erişir.
+ * Agency Admin → kendi ajansının şirketlerine erişir.
+ * Agency Member → company_users ilişkisi gerekli.
  */
 export async function assertCompanyAccess(
   companyId: string,
@@ -14,13 +16,23 @@ export async function assertCompanyAccess(
 ): Promise<void> {
   const company = await prisma.company.findFirst({
     where: { id: companyId, deletedAt: null },
-    select: { id: true },
+    select: { id: true, agencyId: true },
   });
 
   if (!company) throw new NotFoundError('Şirket bulunamadı.');
 
-  if (actor.role === UserRole.OWNER || actor.role === UserRole.ADMIN) return;
+  // Platform owner bypasses all checks
+  if (actor.role === UserRole.PLATFORM_OWNER) return;
 
+  // Agency scope: company must belong to the actor's agency
+  if (actor.agencyId && company.agencyId !== actor.agencyId) {
+    throw new ForbiddenError('Bu şirkete erişim yetkiniz yok.');
+  }
+
+  // Agency admin can access all companies in their agency
+  if (actor.agencyRole === 'agency_admin') return;
+
+  // Agency member needs company_users membership
   const membership = await prisma.companyUser.findUnique({
     where: { companyId_userId: { companyId, userId: actor.userId } },
   });

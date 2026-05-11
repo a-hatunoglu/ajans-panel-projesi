@@ -1,6 +1,26 @@
+// ─── Multi-Tenancy Role Model ─────────────────────────────
+// Platform level: only platform_owner is stored in User.role
+// Agency level: agency_admin, agency_member stored in AgencyUser.role
+// Company level: editor, designer, client stored in CompanyUserRole.role
+
 export enum UserRole {
-  OWNER = 'owner',
-  ADMIN = 'admin',
+  PLATFORM_OWNER = 'platform_owner',
+  USER = 'user',
+  // Legacy aliases — will be removed after full migration
+  /** @deprecated use AgencyRole.AGENCY_ADMIN + agencyScope middleware */
+  OWNER = 'platform_owner',
+  /** @deprecated use AgencyRole.AGENCY_ADMIN + agencyScope middleware */
+  ADMIN = 'platform_owner',
+  /** @deprecated use AgencyRole.AGENCY_MEMBER */
+  MEMBER = 'user',
+}
+
+export enum AgencyRole {
+  AGENCY_ADMIN = 'agency_admin',
+  AGENCY_MEMBER = 'agency_member',
+}
+
+export enum CompanyRole {
   EDITOR = 'editor',
   DESIGNER = 'designer',
   CLIENT = 'client',

@@ -73,8 +73,8 @@ export type CompanyContentsListData = {
 };
 
 export type CompanyMemberRole =
-  | "owner"
-  | "admin"
+  | "platform_owner"
+  | "user"
   | "editor"
   | "designer"
   | "client";
@@ -83,9 +83,12 @@ export type CompanyUserItem = {
   membershipId: string;
   userId: string;
   name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   avatarUrl: string | null;
-  role: CompanyMemberRole;
+  roles: string[];
+  globalRole: CompanyMemberRole;
   isActive: boolean;
 };
 
@@ -160,5 +163,5 @@ export type UpdateCompanyInput = {
 export type UpdateUserInput = {
   firstName?: string;
   lastName?: string;
-  role?: "admin" | "editor" | "designer" | "client";
+  role?: "platform_owner" | "user";
 };

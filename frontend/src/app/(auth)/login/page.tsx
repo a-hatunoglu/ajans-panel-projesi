@@ -55,20 +55,20 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="w-full max-w-sm mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="space-y-2 text-center">
+    <div className="w-full max-w-sm mx-auto flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex flex-col gap-2 text-center">
         <h1 className="text-3xl font-semibold tracking-tight">{t("auth.login.title")}</h1>
         <p className="text-sm text-zinc-400">{t("auth.login.subtitle")}</p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         {errorInfo && (
           <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-md text-sm text-red-500 font-medium">
             {errorInfo}
           </div>
         )}
 
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           <label className="text-sm font-medium text-zinc-300" htmlFor="email">{t("auth.login.email")}</label>
           <input
             id="email"
@@ -82,7 +82,7 @@ export default function LoginPage() {
           {errors.email && <span className="text-xs text-red-500">{errors.email.message}</span>}
         </div>
 
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium text-zinc-300" htmlFor="password">{t("auth.login.password")}</label>
             <Link href="/forgot-password" className="text-sm font-medium text-primary hover:text-white transition-colors">

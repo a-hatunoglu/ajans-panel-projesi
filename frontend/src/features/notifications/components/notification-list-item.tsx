@@ -1,5 +1,7 @@
 "use client";
 
+import React from "react";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { NotificationItem } from "../types";
@@ -33,7 +35,7 @@ function getResourceHref(
   }
 }
 
-export function NotificationListItem({
+export const NotificationListItem = React.memo(function NotificationListItem({
   item,
   onMarkAsRead,
   isMarkingAsRead = false,
@@ -92,7 +94,7 @@ export function NotificationListItem({
               onMarkAsRead(item.id);
             }}
             disabled={disableActions}
-            className="text-xs font-medium text-zinc-400 transition-colors hover:text-white disabled:cursor-not-allowed disabled:text-zinc-600"
+            className="text-xs font-medium text-zinc-400 transition-colors hover:text-white disabled:cursor-not-allowed disabled:text-zinc-600 min-h-[44px] flex items-center px-2"
           >
             {isMarkingAsRead
               ? t("notifications.markingAsRead")
@@ -128,5 +130,5 @@ export function NotificationListItem({
       {content}
     </div>
   );
-}
+});
 

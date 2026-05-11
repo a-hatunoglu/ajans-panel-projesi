@@ -16,7 +16,9 @@ export default function ContentCreatePage() {
   const searchParams = useSearchParams();
   const defaultCompanyId = searchParams.get("company") || undefined;
   const role = user?.role || "guest";
-  const canCreate = ["owner", "admin", "editor", "designer"].includes(role);
+  const companyRoles = user?.companyRoles ?? [];
+  const isClientOnly = role === "user" && companyRoles.length > 0 && companyRoles.every((r) => r === "client");
+  const canCreate = true /* all authenticated users */ && !isClientOnly;
   const companiesQuery = useCreateCompanyOptions(canCreate && !isAuthLoading);
   const companies = companiesQuery.data ?? [];
 
@@ -97,7 +99,7 @@ export default function ContentCreatePage() {
 
       <ContentCreateForm
         companies={companies}
-        currentUser={{ id: user.id, role: role as "owner" | "admin" | "editor" | "designer" | "client" }}
+        currentUser={{ id: user.id, role: role as import("@/features/content-create/types").CreateEligibleRole }}
         defaultCompanyId={defaultCompanyId}
       />
     </PageContainer>

@@ -1,33 +1,24 @@
 "use client";
 
+import React from "react";
+
 import { ChevronRight } from "lucide-react";
 import { ContentAssignment, ContentDateKind, ContentListItemData } from "../types";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useUiCopy } from "@/lib/copy";
 import { useLabels } from "@/lib/labels";
 import { useFormatters } from "@/lib/formatters";
+import { ContentStatusBadge } from "@/components/shared/content-status-badge";
 import { useI18n } from "@/i18n/provider";
 
 interface ContentListItemProps {
   content: ContentListItemData;
+  isSelectable?: boolean;
+  isSelected?: boolean;
+  onToggle?: (id: string) => void;
 }
 
-function getStatusBadge(status: ContentListItemData["status"], label: string) {
-  switch (status) {
-    case "draft":
-      return <span className="text-[10px] font-medium px-2 py-0.5 rounded-full border bg-zinc-500/10 text-zinc-400 border-zinc-500/20">{label}</span>;
-    case "in_review":
-      return <span className="text-[10px] font-medium px-2 py-0.5 rounded-full border bg-blue-500/10 text-blue-400 border-blue-500/20">{label}</span>;
-    case "revise":
-      return <span className="text-[10px] font-medium px-2 py-0.5 rounded-full border bg-orange-500/10 text-orange-400 border-orange-500/20">{label}</span>;
-    case "approved":
-      return <span className="text-[10px] font-medium px-2 py-0.5 rounded-full border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">{label}</span>;
-    case "scheduled":
-      return <span className="text-[10px] font-medium px-2 py-0.5 rounded-full border bg-purple-500/10 text-purple-400 border-purple-500/20">{label}</span>;
-    case "published":
-      return <span className="text-[10px] font-medium px-2 py-0.5 rounded-full border bg-zinc-800 text-zinc-500 border-zinc-700/50">{label}</span>;
-  }
-}
 
 function getAssignmentLabel(assignment: ContentAssignment | null, unassignedLabel: string) {
   if (!assignment) {
@@ -53,8 +44,14 @@ function getWorkflowHintTone(status: ContentListItemData["status"]) {
   }
 }
 
-export function ContentListItem({ content }: ContentListItemProps) {
+export const ContentListItem = React.memo(function ContentListItem({
+  content,
+  isSelectable = false,
+  isSelected = false,
+  onToggle,
+}: ContentListItemProps) {
   const { t } = useI18n();
+  const router = useRouter();
   const uiCopy = useUiCopy();
   const {
     getContentDateKindLabel,
@@ -68,12 +65,38 @@ export function ContentListItem({ content }: ContentListItemProps) {
   const designerLabel = getAssignmentLabel(content.assignedDesigner, uiCopy.unassigned);
   const editorLabel = getAssignmentLabel(content.assignedEditor, uiCopy.unassigned);
 
-  return (
-    <Link
-      href={`/app/contents/${content.id}`}
-      className="w-full p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group hover:bg-white/5 transition-colors text-left focus:outline-none focus-visible:ring-1 focus-visible:ring-primary"
-    >
-      <div className="flex flex-col gap-1 min-w-0 flex-1 sm:w-2/5">
+  const href = `/app/contents/${content.id}`;
+  const rowClassName = "w-full p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group hover:bg-white/5 transition-colors text-left focus:outline-none focus-visible:ring-1 focus-visible:ring-primary";
+
+  const innerContent = (
+    <>
+      <div className="flex items-center gap-3 min-w-0 flex-1 sm:w-2/5">
+        {isSelectable && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggle?.(content.id);
+            }}
+            className="flex h-11 w-11 sm:h-5 sm:w-5 items-center justify-center shrink-0"
+            aria-label={isSelected ? t("contents.bulk.deselect") : t("contents.bulk.select")}
+          >
+            <span
+              className={`flex h-4 w-4 items-center justify-center rounded border transition-colors ${
+                isSelected
+                  ? "border-blue-500 bg-blue-500"
+                  : "border-zinc-600 bg-transparent hover:border-zinc-400"
+              }`}
+            >
+              {isSelected && (
+                <svg className="h-3 w-3 text-white" viewBox="0 0 12 12" fill="none">
+                  <path d="M3 6l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </span>
+          </button>
+        )}
+        <div className="flex flex-col gap-1 min-w-0 flex-1">
         <span className="text-sm font-medium text-zinc-100 truncate group-hover:text-white transition-colors">
           {content.title}
         </span>
@@ -94,11 +117,12 @@ export function ContentListItem({ content }: ContentListItemProps) {
             {t("contents.list.editor")}: {editorLabel}
           </span>
         </div>
+        </div>
       </div>
 
       <div className="flex items-center justify-between sm:justify-start gap-4 sm:gap-6 w-full sm:w-auto shrink-0 mt-2 sm:mt-0">
         <div className="w-24 shrink-0">
-          {getStatusBadge(content.status, statusLabel)}
+          <ContentStatusBadge status={content.status} label={statusLabel} />
         </div>
 
         <div className="w-44 hidden md:flex flex-col gap-1">
@@ -121,6 +145,27 @@ export function ContentListItem({ content }: ContentListItemProps) {
       <div className="hidden sm:flex items-center justify-end w-8 shrink-0">
         <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 transition-colors" />
       </div>
+    </>
+  );
+
+  // When selectable, use div + onClick to avoid nesting button inside anchor (HTML spec violation)
+  if (isSelectable) {
+    return (
+      <div
+        role="link"
+        tabIndex={0}
+        onClick={() => router.push(href)}
+        onKeyDown={(e) => { if (e.key === "Enter") router.push(href); }}
+        className={`${rowClassName} cursor-pointer`}
+      >
+        {innerContent}
+      </div>
+    );
+  }
+
+  return (
+    <Link href={href} className={rowClassName}>
+      {innerContent}
     </Link>
   );
-}
+});

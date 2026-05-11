@@ -37,7 +37,7 @@ export async function logActivity(
 }
 
 export async function listGlobal(actorRole: string, query: ListActivityLogsQuery) {
-  if (actorRole !== UserRole.OWNER && actorRole !== UserRole.ADMIN) {
+  if (actorRole !== UserRole.PLATFORM_OWNER && actorRole !== 'agency_admin') {
     throw new ForbiddenError('Sistem loglarını görme yetkiniz yok.');
   }
 
@@ -64,7 +64,7 @@ export async function listGlobal(actorRole: string, query: ListActivityLogsQuery
 }
 
 export async function listByCompany(companyId: string, actorRole: string, query: ListActivityLogsQuery) {
-  if (actorRole !== UserRole.OWNER && actorRole !== UserRole.ADMIN) {
+  if (actorRole !== UserRole.PLATFORM_OWNER && actorRole !== 'agency_admin') {
     throw new ForbiddenError('Şirket bazlı logları görme yetkiniz yok.');
   }
 
