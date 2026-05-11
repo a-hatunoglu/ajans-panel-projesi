@@ -32,7 +32,9 @@ const app = express();
 app.set('trust proxy', 1);
 
 // Güvenlik başlıkları
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 
 // CORS
 app.use(
